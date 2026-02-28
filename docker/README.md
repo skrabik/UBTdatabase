@@ -6,7 +6,7 @@
 docker compose up -d
 ```
 
-Приложение: http://localhost:8080
+Приложение: http://localhost:19080
 
 При первом запуске entrypoint:
 - ждёт готовности MySQL;

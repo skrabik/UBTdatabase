@@ -24,7 +24,7 @@ cd UBTdatabase
 docker compose up -d
 ```
 
-Приложение: **http://localhost:8080**
+Приложение: **http://localhost:19080**
 
 При первом запуске автоматически:
 - поднимается MySQL;
@@ -72,7 +72,7 @@ php yii migrate
    php yii serve
    ```
 
-Открой http://localhost:8080. Вход: **admin** / **admin**.
+Открой http://localhost:19080 (или 8080 при локальном `php yii serve`). Вход: **admin** / **admin**.
 
 ## Маршруты
 
