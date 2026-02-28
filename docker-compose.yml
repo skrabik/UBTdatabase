@@ -1,3 +1,5 @@
+version: '3.3'
+
 services:
   app:
     build: .
@@ -14,8 +16,7 @@ services:
       YII_ENV: dev
       YII_DEBUG: "1"
     depends_on:
-      mysql:
-        condition: service_healthy
+      - mysql
 
   mysql:
     image: mysql:8.0

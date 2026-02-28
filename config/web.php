@@ -13,8 +13,9 @@ $config = [
     ],
     'components' => [
         'request' => [
-            // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
             'cookieValidationKey' => '8OZ8qCHvL3XX3PA9kdi__s4rFFTVpYwP',
+            // Если приложение открывается по https://domain/ubt/ — раскомментируй:
+            // 'baseUrl' => '/ubt',
         ],
         'cache' => [
             'class' => 'yii\caching\FileCache',
