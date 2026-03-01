@@ -30,5 +30,10 @@ fi
 echo "Running migrations..."
 php yii migrate --interactive=0
 
+# Папки для записи веб-процессом (www-data)
+mkdir -p web/assets web/runtime
+chown -R www-data:www-data web/assets web/runtime 2>/dev/null || true
+chmod -R 775 web/assets web/runtime 2>/dev/null || true
+
 # PHP-FPM в foreground
 exec php-fpm -F
