@@ -4,9 +4,8 @@ services:
   app:
     build: .
     ports:
-      - "19080:8080"
+      - "9000:9000"
     volumes:
-      # Весь проект с хоста — редактируешь локально, изменения сразу в контейнере
       - .:/var/www/html
     environment:
       MYSQL_HOST: mysql

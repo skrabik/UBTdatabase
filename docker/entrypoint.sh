@@ -30,5 +30,5 @@ fi
 echo "Running migrations..."
 php yii migrate --interactive=0
 
-# Запуск встроенного PHP-сервера (0.0.0.0 — доступ с хоста, порт 8080 по умолчанию)
-exec php yii serve 0.0.0.0
+# PHP-FPM в foreground
+exec php-fpm -F
