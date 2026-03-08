@@ -1,0 +1,352 @@
+{
+	"info": {
+		"_postman_id": "ubt-database-api-001",
+		"name": "UBTdatabase API",
+		"description": "API каналов (ZenAccount) и постов. Канал задаётся по **id** или **slug** в пути.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost",
+			"type": "string"
+		},
+		{
+			"key": "channelId",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "channelSlug",
+			"value": "moj-kanal",
+			"type": "string"
+		},
+		{
+			"key": "postId",
+			"value": "1",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Channels (каналы)",
+			"item": [
+				{
+					"name": "Список каналов",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/channels",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "channels"]
+						},
+						"description": "GET /api/channels — список всех каналов."
+					}
+				},
+				{
+					"name": "Один канал по ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/channels/{{channelId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "channels", "{{channelId}}"]
+						},
+						"description": "GET /api/channels/{id} — канал по числовому id."
+					}
+				},
+				{
+					"name": "Один канал по slug",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/channels/{{channelSlug}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "channels", "{{channelSlug}}"]
+						},
+						"description": "GET /api/channels/{slug} — канал по slug (латиница, цифры, дефис)."
+					}
+				},
+				{
+					"name": "Создать канал",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Мой канал\",\n  \"url\": \"https://dzen.ru/id/...\",\n  \"description\": \"Описание канала\",\n  \"theme\": \"Тематика\",\n  \"slug\": \"moj-kanal\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/channels",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "channels"]
+						},
+						"description": "POST /api/channels. Обязательно: name, url. slug — опционально (генерируется из name)."
+					}
+				},
+				{
+					"name": "Удалить канал по ID",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/channels/{{channelId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "channels", "{{channelId}}"]
+						},
+						"description": "DELETE /api/channels/{id}. Ответ: 204 No Content."
+					}
+				},
+				{
+					"name": "Удалить канал по slug",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/channels/{{channelSlug}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "channels", "{{channelSlug}}"]
+						},
+						"description": "DELETE /api/channels/{slug}. Ответ: 204 No Content."
+					}
+				}
+			]
+		},
+		{
+			"name": "Posts (посты канала)",
+			"item": [
+				{
+					"name": "Список постов (канал по ID)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/channels/{{channelId}}/posts",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "channels", "{{channelId}}", "posts"]
+						},
+						"description": "GET /api/channels/{idOrSlug}/posts — список постов канала."
+					}
+				},
+				{
+					"name": "Список постов (канал по slug)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/channels/{{channelSlug}}/posts",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "channels", "{{channelSlug}}", "posts"]
+						},
+						"description": "GET /api/channels/{slug}/posts."
+					}
+				},
+				{
+					"name": "Один пост (канал по ID)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/channels/{{channelId}}/posts/{{postId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "channels", "{{channelId}}", "posts", "{{postId}}"]
+						},
+						"description": "GET /api/channels/{idOrSlug}/posts/{id} — один пост (проверяется принадлежность каналу)."
+					}
+				},
+				{
+					"name": "Один пост (канал по slug)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/channels/{{channelSlug}}/posts/{{postId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "channels", "{{channelSlug}}", "posts", "{{postId}}"]
+						},
+						"description": "GET /api/channels/{slug}/posts/{id}."
+					}
+				},
+				{
+					"name": "Создать пост (канал по ID)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Заголовок поста\",\n  \"content\": \"Текст поста\",\n  \"status\": \"pending\",\n  \"scheduled_at\": null\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/channels/{{channelId}}/posts",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "channels", "{{channelId}}", "posts"]
+						},
+						"description": "POST /api/channels/{idOrSlug}/posts. Обязательно: title. status: draft | pending | posted (по умолчанию pending). scheduled_at — Unix timestamp или null."
+					}
+				},
+				{
+					"name": "Создать пост (канал по slug)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Заголовок поста\",\n  \"content\": \"Текст поста\",\n  \"status\": \"draft\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/channels/{{channelSlug}}/posts",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "channels", "{{channelSlug}}", "posts"]
+						},
+						"description": "POST /api/channels/{slug}/posts."
+					}
+				},
+				{
+					"name": "Обновить пост (PATCH)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Новый заголовок\",\n  \"content\": \"Обновлённый текст\",\n  \"status\": \"posted\",\n  \"scheduled_at\": null\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/channels/{{channelId}}/posts/{{postId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "channels", "{{channelId}}", "posts", "{{postId}}"]
+						},
+						"description": "PATCH /api/channels/{idOrSlug}/posts/{id}. Можно передать только изменяемые поля."
+					}
+				},
+				{
+					"name": "Обновить пост (PUT)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Заголовок\",\n  \"content\": \"Текст\",\n  \"status\": \"pending\",\n  \"scheduled_at\": null\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/channels/{{channelSlug}}/posts/{{postId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "channels", "{{channelSlug}}", "posts", "{{postId}}"]
+						},
+						"description": "PUT /api/channels/{idOrSlug}/posts/{id}."
+					}
+				},
+				{
+					"name": "Удалить пост",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/channels/{{channelId}}/posts/{{postId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "channels", "{{channelId}}", "posts", "{{postId}}"]
+						},
+						"description": "DELETE /api/channels/{idOrSlug}/posts/{id}. Ответ: 204 No Content."
+					}
+				}
+			]
+		}
+	]
+}
