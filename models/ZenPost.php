@@ -32,8 +32,8 @@ class ZenPost extends ActiveRecord
     {
         return [
             self::STATUS_DRAFT => 'Черновик',
-            self::STATUS_PENDING => 'Ожидает постинга',
-            self::STATUS_POSTED => 'Запощено',
+            self::STATUS_PENDING => 'Ожидание публикации',
+            self::STATUS_POSTED => 'Опубликован',
         ];
     }
 
