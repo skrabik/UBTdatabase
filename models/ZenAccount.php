@@ -3,10 +3,12 @@
 namespace app\models;
 
 use yii\db\ActiveRecord;
+use yii\helpers\Inflector;
 
 /**
  * @property int $id
  * @property string $name
+ * @property string $slug
  * @property string|null $description
  * @property string $url
  * @property string|null $theme
@@ -27,6 +29,14 @@ class ZenAccount extends ActiveRecord
         return [
             [['name', 'url'], 'required'],
             [['name'], 'string', 'max' => 255],
+            [['slug'], 'string', 'max' => 255],
+            [['slug'], 'default', 'value' => ''],
+            [['slug'], 'match', 'pattern' => '/^[a-z0-9\-]+$/', 'when' => function () { return $this->slug !== ''; }],
+            [['slug'], 'unique', 'targetAttribute' => 'slug', 'filter' => function ($query) {
+                if (!$this->isNewRecord) {
+                    $query->andWhere(['not', ['id' => $this->id]]);
+                }
+            }, 'when' => function () { return $this->slug !== ''; }],
             [['url'], 'string', 'max' => 500],
             [['theme'], 'string', 'max' => 255],
             [['description'], 'string'],
@@ -39,6 +49,7 @@ class ZenAccount extends ActiveRecord
         return [
             'id' => 'ID',
             'name' => 'Название',
+            'slug' => 'Slug',
             'description' => 'Описание',
             'url' => 'Ссылка на канал',
             'theme' => 'Тематика',
@@ -52,6 +63,18 @@ class ZenAccount extends ActiveRecord
         return $this->hasMany(ZenPost::class, ['account_id' => 'id']);
     }
 
+    public function beforeValidate()
+    {
+        if (parent::beforeValidate()) {
+            if (trim((string) $this->slug) === '') {
+                $this->slug = $this->generateSlug();
+            } else {
+                $this->slug = $this->normalizeSlug($this->slug);
+            }
+        }
+        return true;
+    }
+
     public function beforeSave($insert): bool
     {
         if (parent::beforeSave($insert)) {
@@ -62,5 +85,40 @@ class ZenAccount extends ActiveRecord
             return true;
         }
         return false;
+    }
+
+    /**
+     * Генерирует уникальный slug из названия.
+     */
+    protected function generateSlug(): string
+    {
+        $base = Inflector::slug(Inflector::transliterate($this->name), '-', true);
+        $base = preg_replace('/[^a-z0-9\-]/', '', $base) ?: 'channel';
+        $slug = $base;
+        $n = 0;
+        while (static::find()->andWhere(['slug' => $slug])->andWhere(['not', ['id' => $this->id ?? 0]])->exists()) {
+            $slug = $base . '-' . (++$n);
+        }
+        return $slug;
+    }
+
+    /**
+     * Нормализация slug: только латиница, цифры, дефис.
+     */
+    protected function normalizeSlug(string $value): string
+    {
+        $value = Inflector::slug(Inflector::transliterate($value), '-', true);
+        return preg_replace('/[^a-z0-9\-]/', '', $value) ?: 'channel';
+    }
+
+    /**
+     * Поиск по id или slug.
+     */
+    public static function findByIdOrSlug(string|int $idOrSlug): ?static
+    {
+        if (is_numeric($idOrSlug) && (string) (int) $idOrSlug === (string) $idOrSlug) {
+            return static::findOne((int) $idOrSlug);
+        }
+        return static::findOne(['slug' => $idOrSlug]);
     }
 }
