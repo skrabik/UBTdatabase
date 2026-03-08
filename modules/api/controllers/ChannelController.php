@@ -52,7 +52,7 @@ class ChannelController extends Controller
      */
     public function actionIndex(): array
     {
-        $models = ZenAccount::find()->orderBy(['id' => SORT_DESC])->all();
+        $models = ZenAccount::find()->with('themeRelations')->orderBy(['id' => SORT_DESC])->all();
         return [
             'items' => array_map([$this, 'channelToArray'], $models),
             'total' => count($models),
@@ -82,7 +82,7 @@ class ChannelController extends Controller
         $model->slug = isset($body['slug']) ? trim((string) $body['slug']) : '';
         $model->url = $body['url'] ?? '';
         $model->description = $body['description'] ?? null;
-        $model->theme = $body['theme'] ?? null;
+        $model->themeIds = isset($body['theme_ids']) && is_array($body['theme_ids']) ? array_map('intval', $body['theme_ids']) : [];
         $model->login = isset($body['login']) ? (string) $body['login'] : null;
         $model->password = isset($body['password']) ? (string) $body['password'] : null;
 
@@ -247,13 +247,15 @@ class ChannelController extends Controller
 
     protected function channelToArray(ZenAccount $channel): array
     {
+        $themes = $channel->themeRelations;
         return [
             'id' => (int) $channel->id,
             'slug' => $channel->slug,
             'name' => $channel->name,
             'url' => $channel->url,
             'description' => $channel->description,
-            'theme' => $channel->theme,
+            'theme_ids' => array_map('intval', array_column($themes, 'id')),
+            'themes' => array_map(fn ($t) => ['id' => (int) $t->id, 'name' => $t->name], $themes),
             'login' => $channel->login,
             'password' => $channel->password,
             'created_at' => $channel->created_at,

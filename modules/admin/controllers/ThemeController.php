@@ -2,14 +2,14 @@
 
 namespace app\modules\admin\controllers;
 
-use app\models\ZenAccount;
+use app\models\Theme;
 use Yii;
 use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 
-class ZenAccountController extends Controller
+class ThemeController extends Controller
 {
     public function behaviors(): array
     {
@@ -24,7 +24,7 @@ class ZenAccountController extends Controller
     public function actionIndex(): string
     {
         $dataProvider = new ActiveDataProvider([
-            'query' => ZenAccount::find()->with('themeRelations')->orderBy(['id' => SORT_DESC]),
+            'query' => Theme::find()->orderBy(['name' => SORT_ASC]),
             'pagination' => ['pageSize' => 20],
         ]);
 
@@ -33,10 +33,10 @@ class ZenAccountController extends Controller
 
     public function actionCreate(): string|\yii\web\Response
     {
-        $model = new ZenAccount();
+        $model = new Theme();
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            Yii::$app->session->setFlash('success', 'Аккаунт создан.');
+            Yii::$app->session->setFlash('success', 'Тематика создана.');
             return $this->redirect(['index']);
         }
 
@@ -48,7 +48,7 @@ class ZenAccountController extends Controller
         $model = $this->findModel($id);
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            Yii::$app->session->setFlash('success', 'Аккаунт обновлён.');
+            Yii::$app->session->setFlash('success', 'Тематика обновлена.');
             return $this->redirect(['index']);
         }
 
@@ -58,15 +58,15 @@ class ZenAccountController extends Controller
     public function actionDelete(int $id): \yii\web\Response
     {
         $this->findModel($id)->delete();
-        Yii::$app->session->setFlash('success', 'Аккаунт удалён.');
+        Yii::$app->session->setFlash('success', 'Тематика удалена.');
         return $this->redirect(['index']);
     }
 
-    protected function findModel(int $id): ZenAccount
+    protected function findModel(int $id): Theme
     {
-        $model = ZenAccount::findOne($id);
+        $model = Theme::findOne($id);
         if ($model === null) {
-            throw new NotFoundHttpException('Аккаунт не найден.');
+            throw new NotFoundHttpException('Тематика не найдена.');
         }
         return $model;
     }

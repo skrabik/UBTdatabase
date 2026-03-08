@@ -11,6 +11,7 @@ $this->params['breadcrumbs'][] = $this->title;
     <p class="lead">Добро пожаловать в панель управления.</p>
     <ul>
         <li><?= Html::a('Аккаунты Яндекс.Дзен', ['/admin/zen-account/index']) ?></li>
+        <li><?= Html::a('Тематики каналов', ['/admin/theme/index']) ?></li>
         <li><?= Html::a('Пользователи и роли', ['/admin/user/index']) ?></li>
     </ul>
 </div>

@@ -53,6 +53,7 @@ echo Nav::widget([
     'options' => ['class' => 'navbar-nav me-auto'],
     'items' => [
         ['label' => 'Аккаунты Дзен', 'url' => ['/admin/zen-account/index']],
+        ['label' => 'Тематики каналов', 'url' => ['/admin/theme/index']],
         ['label' => 'Пользователи и роли', 'url' => ['/admin/user/index']],
         '<li class="nav-item">'
             . Html::beginForm(['/admin/logout'], 'post', ['class' => 'd-flex', 'id' => 'logout-form'])

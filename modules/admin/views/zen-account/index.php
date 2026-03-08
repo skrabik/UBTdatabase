@@ -30,7 +30,11 @@ $this->params['breadcrumbs'][] = $this->title;
                 'format' => 'url',
                 'contentOptions' => ['style' => 'max-width: 200px; overflow: hidden; text-overflow: ellipsis;'],
             ],
-            'theme',
+            [
+                'attribute' => 'themeIds',
+                'value' => fn ($m) => implode(', ', array_column($m->themeRelations, 'name')) ?: '—',
+                'label' => 'Тематики',
+            ],
             [
                 'attribute' => 'login',
                 'value' => fn ($m) => $m->login ? (mb_strlen($m->login) > 30 ? mb_substr($m->login, 0, 30) . '…' : $m->login) : '—',

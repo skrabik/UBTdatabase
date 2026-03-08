@@ -101,7 +101,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Мой канал\",\n  \"url\": \"https://dzen.ru/id/...\",\n  \"description\": \"Описание канала\",\n  \"theme\": \"Тематика\",\n  \"slug\": \"moj-kanal\"\n}"
+							"raw": "{\n  \"name\": \"Мой канал\",\n  \"url\": \"https://dzen.ru/id/...\",\n  \"description\": \"Описание канала\",\n  \"theme_ids\": [1, 2],\n  \"slug\": \"moj-kanal\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/channels",

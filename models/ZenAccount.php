@@ -17,10 +17,14 @@ use yii\helpers\Inflector;
  * @property int|null $created_at
  * @property int|null $updated_at
  *
+ * @property Theme[] $themeRelations
  * @property ZenPost[] $posts
  */
 class ZenAccount extends ActiveRecord
 {
+    /** Массив id тематик для множественного выбора (не хранится в БД). */
+    public $themeIds = [];
+
     public static function tableName(): string
     {
         return '{{%zen_account}}';
@@ -41,6 +45,8 @@ class ZenAccount extends ActiveRecord
             }, 'when' => function () { return $this->slug !== ''; }],
             [['url'], 'string', 'max' => 500],
             [['theme'], 'string', 'max' => 255],
+            [['themeIds'], 'each', 'rule' => ['integer']],
+            [['themeIds'], 'each', 'rule' => ['exist', 'targetClass' => Theme::class, 'targetAttribute' => 'id']],
             [['login', 'password'], 'string', 'max' => 2048],
             [['description'], 'string'],
             [['created_at', 'updated_at'], 'integer'],
@@ -55,7 +61,8 @@ class ZenAccount extends ActiveRecord
             'slug' => 'Slug',
             'description' => 'Описание',
             'url' => 'Ссылка на канал',
-            'theme' => 'Тематика',
+            'theme' => 'Тематика (текст)',
+            'themeIds' => 'Тематики',
             'login' => 'Логин',
             'password' => 'Пароль',
             'created_at' => 'Создан',
@@ -63,9 +70,21 @@ class ZenAccount extends ActiveRecord
         ];
     }
 
+    public function getThemeRelations()
+    {
+        return $this->hasMany(Theme::class, ['id' => 'theme_id'])
+            ->viaTable('{{%zen_account_theme}}', ['zen_account_id' => 'id']);
+    }
+
     public function getPosts()
     {
         return $this->hasMany(ZenPost::class, ['account_id' => 'id']);
+    }
+
+    public function afterFind()
+    {
+        parent::afterFind();
+        $this->themeIds = array_column($this->themeRelations, 'id');
     }
 
     public function beforeValidate()
@@ -76,8 +95,26 @@ class ZenAccount extends ActiveRecord
             } else {
                 $this->slug = $this->normalizeSlug($this->slug);
             }
+            if (!is_array($this->themeIds)) {
+                $this->themeIds = [];
+            }
+            $this->themeIds = array_map('intval', array_filter($this->themeIds));
         }
         return true;
+    }
+
+    public function afterSave($insert, $changedAttributes)
+    {
+        parent::afterSave($insert, $changedAttributes);
+        if (!$insert) {
+            $this->db->createCommand()->delete('{{%zen_account_theme}}', ['zen_account_id' => $this->id])->execute();
+        }
+        foreach ($this->themeIds as $themeId) {
+            $this->db->createCommand()->insert('{{%zen_account_theme}}', [
+                'zen_account_id' => $this->id,
+                'theme_id' => $themeId,
+            ])->execute();
+        }
     }
 
     public function beforeSave($insert): bool
