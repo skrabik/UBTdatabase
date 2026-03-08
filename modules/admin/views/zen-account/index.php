@@ -20,6 +20,7 @@ $this->params['breadcrumbs'][] = $this->title;
         'columns' => [
             'id',
             'name',
+            'slug',
             [
                 'attribute' => 'description',
                 'value' => fn ($m) => $m->description ? (mb_strlen($m->description) > 50 ? mb_substr($m->description, 0, 50) . '…' : $m->description) : '—',
@@ -31,6 +32,10 @@ $this->params['breadcrumbs'][] = $this->title;
             ],
             'theme',
             [
+                'attribute' => 'login',
+                'value' => fn ($m) => $m->login ? (mb_strlen($m->login) > 30 ? mb_substr($m->login, 0, 30) . '…' : $m->login) : '—',
+            ],
+            [
                 'attribute' => 'created_at',
                 'format' => ['date', 'php:d.m.Y H:i'],
             ],
@@ -40,6 +45,9 @@ $this->params['breadcrumbs'][] = $this->title;
                 'buttons' => [
                     'posts' => function ($url, $model) {
                         return Html::a('Посты', ['/admin/zen-post/index', 'account_id' => $model->id], ['class' => 'btn btn-sm btn-outline-primary']);
+                    },
+                    'update' => function ($url, $model) {
+                        return Html::a('Редактировать', ['update', 'id' => $model->id], ['class' => 'btn btn-sm btn-outline-secondary']);
                     },
                     'delete' => function ($url, $model, $key) {
                         return Html::a('Удалить', ['delete', 'id' => $model->id], [
