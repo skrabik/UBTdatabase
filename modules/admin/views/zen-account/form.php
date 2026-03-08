@@ -19,6 +19,8 @@ $this->params['breadcrumbs'][] = $this->title;
     <?= $form->field($model, 'description')->textarea(['rows' => 3]) ?>
     <?= $form->field($model, 'url')->textInput(['maxlength' => true]) ?>
     <?= $form->field($model, 'theme')->textInput(['maxlength' => true]) ?>
+    <?= $form->field($model, 'login')->textInput(['maxlength' => 2048]) ?>
+    <?= $form->field($model, 'password')->textInput(['maxlength' => 2048]) ?>
 
     <div class="form-group">
         <?= Html::submitButton('Сохранить', ['class' => 'btn btn-primary']) ?>

@@ -12,6 +12,8 @@ use yii\helpers\Inflector;
  * @property string|null $description
  * @property string $url
  * @property string|null $theme
+ * @property string|null $login
+ * @property string|null $password
  * @property int|null $created_at
  * @property int|null $updated_at
  *
@@ -39,6 +41,7 @@ class ZenAccount extends ActiveRecord
             }, 'when' => function () { return $this->slug !== ''; }],
             [['url'], 'string', 'max' => 500],
             [['theme'], 'string', 'max' => 255],
+            [['login', 'password'], 'string', 'max' => 2048],
             [['description'], 'string'],
             [['created_at', 'updated_at'], 'integer'],
         ];
@@ -53,6 +56,8 @@ class ZenAccount extends ActiveRecord
             'description' => 'Описание',
             'url' => 'Ссылка на канал',
             'theme' => 'Тематика',
+            'login' => 'Логин',
+            'password' => 'Пароль',
             'created_at' => 'Создан',
             'updated_at' => 'Обновлён',
         ];

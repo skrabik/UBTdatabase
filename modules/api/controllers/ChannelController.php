@@ -83,6 +83,8 @@ class ChannelController extends Controller
         $model->url = $body['url'] ?? '';
         $model->description = $body['description'] ?? null;
         $model->theme = $body['theme'] ?? null;
+        $model->login = isset($body['login']) ? (string) $body['login'] : null;
+        $model->password = isset($body['password']) ? (string) $body['password'] : null;
 
         if (!$model->validate()) {
             Yii::$app->response->setStatusCode(422);
@@ -252,6 +254,8 @@ class ChannelController extends Controller
             'url' => $channel->url,
             'description' => $channel->description,
             'theme' => $channel->theme,
+            'login' => $channel->login,
+            'password' => $channel->password,
             'created_at' => $channel->created_at,
             'updated_at' => $channel->updated_at,
         ];
