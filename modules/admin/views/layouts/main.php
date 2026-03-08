@@ -21,11 +21,16 @@ $this->registerCss(<<<CSS
     background-color: rgba(255, 255, 255, 0.15);
     border-radius: 0.25rem;
 }
-#logoutModal .modal-dialog { margin: 1.75rem auto; }
-#logoutModal .modal-content { border: none; border-radius: 0.5rem; box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.2); }
-#logoutModal .modal-header { border-bottom: 1px solid #dee2e6; padding: 1rem 1.25rem; }
-#logoutModal .modal-body { padding: 1.25rem; font-size: 1rem; }
-#logoutModal .modal-footer { border-top: 1px solid #dee2e6; padding: 1rem 1.25rem; gap: 0.5rem; }
+#logoutModal .modal-dialog,
+#confirmModal .modal-dialog { margin: 1.75rem auto; }
+#logoutModal .modal-content,
+#confirmModal .modal-content { border: none; border-radius: 0.5rem; box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.2); }
+#logoutModal .modal-header,
+#confirmModal .modal-header { border-bottom: 1px solid #dee2e6; padding: 1rem 1.25rem; }
+#logoutModal .modal-body,
+#confirmModal .modal-body { padding: 1.25rem; font-size: 1rem; }
+#logoutModal .modal-footer,
+#confirmModal .modal-footer { border-top: 1px solid #dee2e6; padding: 1rem 1.25rem; gap: 0.5rem; }
 CSS
 );
 ?>
@@ -100,11 +105,94 @@ echo Html::endTag('div');
 echo Html::endTag('div');
 echo Html::endTag('div');
 echo Html::endTag('div');
+echo Html::endTag('div');
+
+// Универсальное модальное окно подтверждения (как для выхода)
+echo Html::beginTag('div', [
+    'class' => 'modal fade',
+    'id' => 'confirmModal',
+    'tabindex' => -1,
+    'aria-labelledby' => 'confirmModalLabel',
+    'aria-hidden' => 'true',
+]);
+echo Html::beginTag('div', ['class' => 'modal-dialog modal-dialog-centered']);
+echo Html::beginTag('div', ['class' => 'modal-content']);
+echo Html::beginTag('div', ['class' => 'modal-header']);
+echo Html::tag('h5', 'Подтверждение', ['class' => 'modal-title', 'id' => 'confirmModalLabel']);
+echo Html::button('', [
+    'type' => 'button',
+    'class' => 'btn-close',
+    'data-bs-dismiss' => 'modal',
+    'aria-label' => 'Закрыть',
+]);
+echo Html::endTag('div');
+echo Html::beginTag('div', ['class' => 'modal-body']);
+echo Html::tag('p', '', ['class' => 'mb-0', 'id' => 'confirmModalBody']);
+echo Html::endTag('div');
+echo Html::beginTag('div', ['class' => 'modal-footer']);
+echo Html::button('Отмена', [
+    'type' => 'button',
+    'class' => 'btn btn-secondary',
+    'data-bs-dismiss' => 'modal',
+]);
+echo Html::button('Подтвердить', [
+    'type' => 'button',
+    'class' => 'btn btn-primary',
+    'id' => 'confirm-modal-submit',
+]);
+echo Html::endTag('div');
+echo Html::endTag('div');
+echo Html::endTag('div');
+echo Html::endTag('div');
 
 $this->registerJs(<<<JS
 (function() {
     document.getElementById('logout-confirm-btn').addEventListener('click', function() {
         document.getElementById('logout-form').submit();
+    });
+
+    var confirmModal = document.getElementById('confirmModal');
+    var confirmTitle = document.getElementById('confirmModalLabel');
+    var confirmBody = document.getElementById('confirmModalBody');
+    var confirmSubmit = document.getElementById('confirm-modal-submit');
+    var pendingLink = null;
+
+    document.body.addEventListener('click', function(e) {
+        var el = e.target.closest('a[data-confirm-modal], a[data-confirm]');
+        if (!el) return;
+        e.preventDefault();
+        pendingLink = el;
+        confirmTitle.textContent = el.getAttribute('data-confirm-title') || 'Подтверждение';
+        confirmBody.textContent = el.getAttribute('data-confirm-modal') || el.getAttribute('data-confirm') || 'Вы уверены?';
+        var modal = new bootstrap.Modal(confirmModal);
+        modal.show();
+    }, true);
+
+    confirmSubmit.addEventListener('click', function() {
+        if (!pendingLink) return;
+        var href = pendingLink.getAttribute('href');
+        var method = (pendingLink.getAttribute('data-method') || 'get').toLowerCase();
+        if (method === 'post') {
+            var form = document.createElement('form');
+            form.method = 'post';
+            form.action = href;
+            form.style.display = 'none';
+            var csrfParam = document.querySelector('meta[name="csrf-param"]');
+            var csrfToken = document.querySelector('meta[name="csrf-token"]');
+            if (csrfParam && csrfToken) {
+                var input = document.createElement('input');
+                input.name = csrfParam.getAttribute('content');
+                input.value = csrfToken.getAttribute('content');
+                input.type = 'hidden';
+                form.appendChild(input);
+            }
+            document.body.appendChild(form);
+            form.submit();
+        } else {
+            window.location.href = href;
+        }
+        bootstrap.Modal.getInstance(confirmModal).hide();
+        pendingLink = null;
     });
 })();
 JS
