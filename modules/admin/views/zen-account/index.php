@@ -27,7 +27,8 @@ $this->params['breadcrumbs'][] = $this->title;
             ],
             [
                 'attribute' => 'url',
-                'format' => 'url',
+                'format' => 'raw',
+                'value' => fn ($m) => $m->url ? Html::a($m->url, $m->url, ['target' => '_blank', 'rel' => 'noopener noreferrer', 'title' => $m->url]) : '—',
                 'contentOptions' => ['style' => 'max-width: 200px; overflow: hidden; text-overflow: ellipsis;'],
             ],
             [
