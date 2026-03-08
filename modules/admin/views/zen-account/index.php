@@ -44,7 +44,8 @@ $this->params['breadcrumbs'][] = $this->title;
                     'delete' => function ($url, $model, $key) {
                         return Html::a('Удалить', ['delete', 'id' => $model->id], [
                             'title' => 'Удалить',
-                            'data-confirm' => 'Удалить этот аккаунт и все его посты?',
+                            'data-confirm-modal' => 'Удалить этот аккаунт и все его посты?',
+                            'data-confirm-title' => 'Удалить аккаунт',
                             'data-method' => 'post',
                             'data-pjax' => '0',
                         ]);

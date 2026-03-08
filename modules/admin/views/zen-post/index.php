@@ -19,21 +19,14 @@ $this->params['breadcrumbs'][] = $this->title;
     <h1><?= Html::encode($this->title) ?></h1>
 
     <p>
-        <?= Html::a('Добавить пост', ['create', 'account_id' => $accountId], ['class' => 'btn btn-success']) ?>
-        <?php if ($accountId): ?>
-            <?= Html::a('Все аккаунты', ['/admin/zen-account/index'], ['class' => 'btn btn-outline-secondary']) ?>
-        <?php endif; ?>
+        <?= Html::a('Добавить пост', ['/admin/zen-post/create', 'account_id' => $accountId], ['class' => 'btn btn-success']) ?>
+        <?= Html::a('К аккаунтам', ['/admin/zen-account/index'], ['class' => 'btn btn-outline-secondary']) ?>
     </p>
 
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
         'columns' => [
             'id',
-            [
-                'attribute' => 'account_id',
-                'value' => fn ($m) => $m->account ? $m->account->name : $m->account_id,
-                'visible' => !$accountId,
-            ],
             [
                 'attribute' => 'title',
                 'contentOptions' => ['style' => 'max-width: 250px;'],
@@ -58,23 +51,26 @@ $this->params['breadcrumbs'][] = $this->title;
                 'buttons' => [
                     'set-posted' => function ($url, $model) {
                         if ($model->status === ZenPost::STATUS_POSTED) return '';
-                        return Html::a('Запощено', ['set-status', 'id' => $model->id, 'status' => ZenPost::STATUS_POSTED], ['class' => 'btn btn-sm btn-success', 'data-method' => 'post']);
+                        return Html::a('Запощено', ['/admin/zen-post/set-status', 'account_id' => $model->account_id, 'id' => $model->id, 'status' => ZenPost::STATUS_POSTED], ['class' => 'btn btn-sm btn-success', 'data-method' => 'post']);
                     },
                     'set-pending' => function ($url, $model) {
                         if ($model->status === ZenPost::STATUS_PENDING) return '';
-                        return Html::a('В очередь', ['set-status', 'id' => $model->id, 'status' => ZenPost::STATUS_PENDING], ['class' => 'btn btn-sm btn-warning', 'data-method' => 'post']);
+                        return Html::a('В очередь', ['/admin/zen-post/set-status', 'account_id' => $model->account_id, 'id' => $model->id, 'status' => ZenPost::STATUS_PENDING], ['class' => 'btn btn-sm btn-warning', 'data-method' => 'post']);
                     },
                     'delete' => function ($url, $model) {
-                        return Html::a('Удалить', ['delete', 'id' => $model->id], [
+                        return Html::a('Удалить', ['/admin/zen-post/delete', 'account_id' => $model->account_id, 'id' => $model->id], [
                             'title' => 'Удалить',
-                            'data-confirm' => 'Удалить этот пост?',
+                            'data-confirm-modal' => 'Удалить этот пост?',
+                            'data-confirm-title' => 'Удалить пост',
                             'data-method' => 'post',
                             'data-pjax' => '0',
                         ]);
                     },
                 ],
                 'urlCreator' => function ($action, $model) {
-                    if (in_array($action, ['update', 'delete'], true)) return [$action, 'id' => $model->id];
+                    if (in_array($action, ['update', 'delete'], true)) {
+                        return ['/admin/zen-post/' . $action, 'account_id' => $model->account_id, 'id' => $model->id];
+                    }
                     return '#';
                 },
             ],
