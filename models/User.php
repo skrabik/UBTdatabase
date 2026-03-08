@@ -16,6 +16,9 @@ use yii\web\IdentityInterface;
  */
 class User extends ActiveRecord implements IdentityInterface
 {
+    /** Пароль (только для формы, в БД не хранится) */
+    public ?string $password = null;
+
     public static function tableName(): string
     {
         return '{{%user}}';
@@ -24,9 +27,15 @@ class User extends ActiveRecord implements IdentityInterface
     public function rules(): array
     {
         return [
-            [['username', 'password_hash'], 'required'],
+            [['username'], 'required'],
             [['username'], 'string', 'max' => 255],
-            [['username'], 'unique'],
+            [['username'], 'unique', 'filter' => function ($query) {
+                if (!$this->isNewRecord) {
+                    $query->andWhere(['not', ['id' => $this->id]]);
+                }
+            }],
+            [['password'], 'string', 'min' => 3],
+            [['password'], 'required', 'on' => 'create'],
             [['created_at', 'updated_at'], 'integer'],
         ];
     }
@@ -36,11 +45,17 @@ class User extends ActiveRecord implements IdentityInterface
         return [
             'id' => 'ID',
             'username' => 'Логин',
+            'password' => 'Пароль',
             'auth_key' => 'Ключ авторизации',
             'password_hash' => 'Хеш пароля',
             'created_at' => 'Создан',
             'updated_at' => 'Обновлён',
         ];
+    }
+
+    public function setPassword(string $password): void
+    {
+        $this->password_hash = Yii::$app->security->generatePasswordHash($password);
     }
 
     public static function findIdentity($id)
@@ -101,6 +116,9 @@ class User extends ActiveRecord implements IdentityInterface
         if (parent::beforeSave($insert)) {
             if ($insert) {
                 $this->auth_key = Yii::$app->security->generateRandomString();
+            }
+            if ($this->password !== null && $this->password !== '') {
+                $this->setPassword($this->password);
             }
             $this->updated_at = time();
             if ($insert) {

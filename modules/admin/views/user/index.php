@@ -11,6 +11,8 @@ $this->params['breadcrumbs'][] = $this->title;
 <div class="admin-user-index">
     <h1><?= Html::encode($this->title) ?></h1>
 
+    <p><?= Html::a('Создать пользователя', ['create'], ['class' => 'btn btn-success']) ?></p>
+
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
         'columns' => [
@@ -24,10 +26,15 @@ $this->params['breadcrumbs'][] = $this->title;
             ],
             [
                 'class' => 'yii\grid\ActionColumn',
-                'template' => '{update}',
+                'template' => '{update} {delete}',
                 'urlCreator' => function ($action, $model) {
-                    return ['/admin/user/update', 'id' => $model->id];
+                    return ['/admin/user/' . $action, 'id' => $model->id];
                 },
+                'visibleButtons' => [
+                    'delete' => function ($model) {
+                        return (string) $model->id !== (string) Yii::$app->user->id;
+                    },
+                ],
             ],
         ],
     ]) ?>

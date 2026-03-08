@@ -7,17 +7,17 @@
 use yii\bootstrap5\ActiveForm;
 use yii\bootstrap5\Html;
 
-$this->title = 'Редактировать: ' . $model->username;
+$this->title = 'Новый пользователь';
 $this->params['breadcrumbs'][] = ['label' => 'Пользователи и роли', 'url' => ['index']];
-$this->params['breadcrumbs'][] = $model->username;
+$this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="admin-user-update">
+<div class="admin-user-create">
     <h1><?= Html::encode($this->title) ?></h1>
 
     <?php $form = ActiveForm::begin(); ?>
 
-    <?= $form->field($model, 'username')->textInput(['maxlength' => true]) ?>
-    <?= $form->field($model, 'password')->passwordInput(['minlength' => 3])->hint('Оставьте пустым, чтобы не менять пароль') ?>
+    <?= $form->field($model, 'username')->textInput(['maxlength' => true, 'autofocus' => true]) ?>
+    <?= $form->field($model, 'password')->passwordInput(['minlength' => 3]) ?>
 
     <div class="mb-3">
         <label class="form-label">Роль</label>
@@ -31,7 +31,7 @@ $this->params['breadcrumbs'][] = $model->username;
     </div>
 
     <div class="form-group">
-        <?= Html::submitButton('Сохранить', ['class' => 'btn btn-primary']) ?>
+        <?= Html::submitButton('Создать', ['class' => 'btn btn-primary']) ?>
         <?= Html::a('Отмена', ['index'], ['class' => 'btn btn-secondary']) ?>
     </div>
 
