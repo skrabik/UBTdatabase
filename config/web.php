@@ -14,6 +14,10 @@ $config = [
     'components' => [
         'request' => [
             'cookieValidationKey' => '8OZ8qCHvL3XX3PA9kdi__s4rFFTVpYwP',
+            // Парсинг JSON в теле запроса для API
+            'parsers' => [
+                'application/json' => 'yii\web\JsonParser',
+            ],
             // Если приложение открывается по https://domain/ubt/ — раскомментируй:
             // 'baseUrl' => '/ubt',
         ],
@@ -53,6 +57,25 @@ $config = [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
+                // API каналов (id — число, slug — латиница/цифры/дефис)
+                'GET api/channels' => 'api/channel/index',
+                'GET api/channels/<idOrSlug:\d+|[a-z0-9\-]+>' => 'api/channel/view',
+                'POST api/channels' => 'api/channel/create',
+                'DELETE api/channels/<idOrSlug:\d+|[a-z0-9\-]+>' => 'api/channel/delete',
+                // Посты канала (канал по id или slug)
+                'GET api/channels/<idOrSlug:\d+|[a-z0-9\-]+>/posts' => 'api/channel/posts',
+                'GET api/channels/<idOrSlug:\d+|[a-z0-9\-]+>/posts/<id:\d+>' => 'api/channel/view-post',
+                'POST api/channels/<idOrSlug:\d+|[a-z0-9\-]+>/posts' => 'api/channel/create-post',
+                'PUT api/channels/<idOrSlug:\d+|[a-z0-9\-]+>/posts/<id:\d+>' => 'api/channel/update-post',
+                'PATCH api/channels/<idOrSlug:\d+|[a-z0-9\-]+>/posts/<id:\d+>' => 'api/channel/update-post',
+                'DELETE api/channels/<idOrSlug:\d+|[a-z0-9\-]+>/posts/<id:\d+>' => 'api/channel/delete-post',
+                // Admin: посты вложены в аккаунт — zen-account/{account_id}/zen-post/...
+                ['pattern' => 'admin/zen-account/<account_id:\d+>/zen-post', 'route' => 'admin/zen-post/index'],
+                ['pattern' => 'admin/zen-account/<account_id:\d+>/zen-post/create', 'route' => 'admin/zen-post/create'],
+                ['pattern' => 'admin/zen-account/<account_id:\d+>/zen-post/update/<id:\d+>', 'route' => 'admin/zen-post/update'],
+                ['pattern' => 'admin/zen-account/<account_id:\d+>/zen-post/delete/<id:\d+>', 'route' => 'admin/zen-post/delete'],
+                ['pattern' => 'admin/zen-account/<account_id:\d+>/zen-post/set-status/<id:\d+>', 'route' => 'admin/zen-post/set-status'],
+                // Admin
                 'admin/login' => 'admin/auth/login',
                 'admin/logout' => 'admin/auth/logout',
                 'admin/error' => 'admin/auth/error',
@@ -62,6 +85,9 @@ $config = [
     'modules' => [
         'admin' => [
             'class' => 'app\modules\admin\Module',
+        ],
+        'api' => [
+            'class' => 'app\modules\api\Module',
         ],
     ],
     'params' => $params,
