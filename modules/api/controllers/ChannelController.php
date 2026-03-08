@@ -85,6 +85,7 @@ class ChannelController extends Controller
         $model->themeIds = isset($body['theme_ids']) && is_array($body['theme_ids']) ? array_map('intval', $body['theme_ids']) : [];
         $model->login = isset($body['login']) ? (string) $body['login'] : null;
         $model->password = isset($body['password']) ? (string) $body['password'] : null;
+        $model->proxy_ip = isset($body['proxy_ip']) ? (string) $body['proxy_ip'] : null;
 
         if (!$model->validate()) {
             Yii::$app->response->setStatusCode(422);
@@ -258,6 +259,7 @@ class ChannelController extends Controller
             'themes' => array_map(fn ($t) => ['id' => (int) $t->id, 'name' => $t->name], $themes),
             'login' => $channel->login,
             'password' => $channel->password,
+            'proxy_ip' => $channel->proxy_ip,
             'created_at' => $channel->created_at,
             'updated_at' => $channel->updated_at,
         ];

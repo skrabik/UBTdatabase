@@ -14,6 +14,7 @@ use yii\helpers\Inflector;
  * @property string|null $theme
  * @property string|null $login
  * @property string|null $password
+ * @property string|null $proxy_ip
  * @property int|null $created_at
  * @property int|null $updated_at
  *
@@ -48,6 +49,7 @@ class ZenAccount extends ActiveRecord
             [['themeIds'], 'each', 'rule' => ['integer']],
             [['themeIds'], 'each', 'rule' => ['exist', 'targetClass' => Theme::class, 'targetAttribute' => 'id']],
             [['login', 'password'], 'string', 'max' => 2048],
+            [['proxy_ip'], 'string', 'max' => 255],
             [['description'], 'string'],
             [['created_at', 'updated_at'], 'integer'],
         ];
@@ -65,6 +67,7 @@ class ZenAccount extends ActiveRecord
             'themeIds' => 'Тематики',
             'login' => 'Логин',
             'password' => 'Пароль',
+            'proxy_ip' => 'Прокси IP',
             'created_at' => 'Создан',
             'updated_at' => 'Обновлён',
         ];

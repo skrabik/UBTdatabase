@@ -27,6 +27,7 @@ $this->params['breadcrumbs'][] = $this->title;
     )->label('Тематики') ?>
     <?= $form->field($model, 'login')->textInput(['maxlength' => 2048]) ?>
     <?= $form->field($model, 'password')->textInput(['maxlength' => 2048]) ?>
+    <?= $form->field($model, 'proxy_ip')->textInput(['maxlength' => 255])->hint('Например: 1.2.3.4 или 1.2.3.4:8080') ?>
 
     <div class="form-group">
         <?= Html::submitButton('Сохранить', ['class' => 'btn btn-primary']) ?>

@@ -40,6 +40,10 @@ $this->params['breadcrumbs'][] = $this->title;
                 'value' => fn ($m) => $m->login ? (mb_strlen($m->login) > 30 ? mb_substr($m->login, 0, 30) . '…' : $m->login) : '—',
             ],
             [
+                'attribute' => 'proxy_ip',
+                'value' => fn ($m) => $m->proxy_ip ?: '—',
+            ],
+            [
                 'attribute' => 'created_at',
                 'format' => ['date', 'php:d.m.Y H:i'],
             ],
