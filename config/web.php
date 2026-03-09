@@ -39,11 +39,11 @@ $config = [
             'useFileTransport' => true,
         ],
         'log' => [
-            'traceLevel' => YII_DEBUG ? 3 : 0,
+            'traceLevel' => YII_DEBUG ? 10 : 0,
             'targets' => [
                 [
                     'class' => 'yii\log\FileTarget',
-                    'levels' => ['error', 'warning'],
+                    'levels' => ['error', 'warning', 'info', 'trace', 'profile'],
                 ],
             ],
         ],
@@ -52,6 +52,11 @@ $config = [
             'class' => 'yii\rbac\DbManager',
             // uncomment to use cached (recommended for production):
             // 'cache' => 'cache',
+        ],
+        'queue' => [
+            'class' => \yii\queue\file\Queue::class,
+            'path' => '@runtime/queue',
+            'as log' => \yii\queue\LogBehavior::class,
         ],
         'urlManager' => [
             'enablePrettyUrl' => true,
@@ -72,6 +77,8 @@ $config = [
                 // Admin: посты вложены в аккаунт — zen-account/{account_id}/zen-post/...
                 ['pattern' => 'admin/zen-account/<account_id:\d+>/zen-post', 'route' => 'admin/zen-post/index'],
                 ['pattern' => 'admin/zen-account/<account_id:\d+>/zen-post/create', 'route' => 'admin/zen-post/create'],
+                ['pattern' => 'admin/zen-account/<account_id:\d+>/zen-post/send-log/<id:\d+>', 'route' => 'admin/zen-post/send-log'],
+                ['pattern' => 'admin/zen-account/<account_id:\d+>/zen-post/send-log-data/<id:\d+>', 'route' => 'admin/zen-post/send-log-data'],
                 ['pattern' => 'admin/zen-account/<account_id:\d+>/zen-post/update/<id:\d+>', 'route' => 'admin/zen-post/update'],
                 ['pattern' => 'admin/zen-account/<account_id:\d+>/zen-post/delete/<id:\d+>', 'route' => 'admin/zen-post/delete'],
                 ['pattern' => 'admin/zen-account/<account_id:\d+>/zen-post/set-status/<id:\d+>', 'route' => 'admin/zen-post/set-status'],

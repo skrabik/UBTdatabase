@@ -38,13 +38,17 @@ class ZenPostController extends Controller
 
     public function actionCreate(int $account_id): string|\yii\web\Response
     {
-        $account = $this->findAccount($account_id);
+        $this->findAccount($account_id);
         $model = new ZenPost();
         $model->account_id = $account_id;
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            Yii::$app->session->setFlash('success', 'Пост создан.');
-            return $this->redirect(['/admin/zen-post/index', 'account_id' => $account_id]);
+        if ($model->load(Yii::$app->request->post())) {
+            Yii::$app->params['skipPostArticleSend'] = true;
+            if ($model->save()) {
+                $model->enqueueRemotePublish();
+                Yii::$app->session->setFlash('success', 'Пост создан.');
+                return $this->redirect(['/admin/zen-post/send-log', 'account_id' => $account_id, 'id' => $model->id]);
+            }
         }
 
         return $this->render('form', ['model' => $model, 'accountId' => $account_id]);
@@ -94,6 +98,63 @@ class ZenPostController extends Controller
             Yii::$app->session->setFlash('success', 'Статус обновлён.');
         }
         return $this->redirect(['/admin/zen-post/index', 'account_id' => $account_id]);
+    }
+
+    /**
+     * Страница результата отправки поста на внешний сервис.
+     */
+    public function actionSendLog(int $account_id, int $id): string
+    {
+        $this->findAccount($account_id);
+        $model = $this->findModel($id);
+        if ((int) $model->account_id !== (int) $account_id) {
+            throw new NotFoundHttpException('Пост не принадлежит этому аккаунту.');
+        }
+
+        return $this->render('send-log', [
+            'postId' => $id,
+            'indexUrl' => Yii::$app->urlManager->createUrl([
+                '/admin/zen-post/index',
+                'account_id' => $account_id,
+            ]),
+            'statusUrl' => Yii::$app->urlManager->createUrl([
+                '/admin/zen-post/send-log-data',
+                'account_id' => $account_id,
+                'id' => $id,
+            ]),
+            'payload' => $this->buildSendLogPayload($model),
+        ]);
+    }
+
+    /**
+     * JSON-эндпоинт состояния публикации для страницы результата.
+     */
+    public function actionSendLogData(int $account_id, int $id)
+    {
+        $this->findAccount($account_id);
+        $model = $this->findModel($id);
+        if ((int) $model->account_id !== (int) $account_id) {
+            throw new NotFoundHttpException('Пост не принадлежит этому аккаунту.');
+        }
+
+        return $this->asJson($this->buildSendLogPayload($model));
+    }
+
+    protected function buildSendLogPayload(ZenPost $model): array
+    {
+        $responseData = $model->getRemotePublishResponse();
+        $logs = $model->getRemotePublishLogs();
+        $labels = ZenPost::remotePublishStatusLabels();
+
+        return [
+            'job_id' => $model->remote_job_id,
+            'queue_status' => $model->remote_publish_status,
+            'queue_status_label' => $labels[$model->remote_publish_status] ?? $model->remote_publish_status,
+            'is_finished' => in_array($model->remote_publish_status, [ZenPost::REMOTE_PUBLISH_SUCCESS, ZenPost::REMOTE_PUBLISH_ERROR], true),
+            'message' => $model->remote_publish_message ?: ($responseData['message'] ?? ''),
+            'response' => $responseData,
+            'logs' => $logs,
+        ];
     }
 
     protected function findAccount(int $id): ZenAccount

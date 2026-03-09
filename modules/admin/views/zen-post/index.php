@@ -46,6 +46,25 @@ $this->params['breadcrumbs'][] = $this->title;
                 'format' => ['date', 'php:d.m.Y H:i'],
             ],
             [
+                'label' => 'Удалённая публикация',
+                'format' => 'raw',
+                'value' => function ($m) {
+                    $labels = \app\models\ZenPost::remotePublishStatusLabels();
+                    $label = $labels[$m->remote_publish_status] ?? $m->remote_publish_status;
+                    $classMap = [
+                        \app\models\ZenPost::REMOTE_PUBLISH_NEW => 'secondary',
+                        \app\models\ZenPost::REMOTE_PUBLISH_QUEUED => 'warning',
+                        \app\models\ZenPost::REMOTE_PUBLISH_RUNNING => 'info',
+                        \app\models\ZenPost::REMOTE_PUBLISH_SUCCESS => 'success',
+                        \app\models\ZenPost::REMOTE_PUBLISH_ERROR => 'danger',
+                    ];
+                    $class = $classMap[$m->remote_publish_status] ?? 'secondary';
+                    $badge = Html::tag('span', $label, ['class' => "badge bg-{$class}"]);
+                    $link = Html::a('Результат', ['/admin/zen-post/send-log', 'account_id' => $m->account_id, 'id' => $m->id], ['class' => 'ms-2']);
+                    return $badge . $link;
+                },
+            ],
+            [
                 'class' => 'yii\grid\ActionColumn',
                 'template' => '{update} {set-posted} {set-pending} {delete}',
                 'buttons' => [
