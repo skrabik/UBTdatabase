@@ -4,6 +4,7 @@
 /** @var int|null $accountId */
 
 use app\models\ZenPost;
+use app\models\ZenPostPublishAttempt;
 use yii\bootstrap5\Html;
 use yii\grid\GridView;
 
@@ -42,32 +43,40 @@ $this->params['breadcrumbs'][] = $this->title;
                 },
             ],
             [
-                'attribute' => 'posted_at',
-                'format' => ['date', 'php:d.m.Y H:i'],
-            ],
-            [
                 'label' => 'Удалённая публикация',
                 'format' => 'raw',
                 'value' => function ($m) {
-                    $labels = \app\models\ZenPost::remotePublishStatusLabels();
-                    $label = $labels[$m->remote_publish_status] ?? $m->remote_publish_status;
+                    $attempt = $m->latestPublishAttempt;
+                    $status = $attempt?->status ?? ZenPostPublishAttempt::STATUS_NEW;
+                    $labels = ZenPostPublishAttempt::statusLabels();
+                    $label = $labels[$status] ?? $status;
                     $classMap = [
-                        \app\models\ZenPost::REMOTE_PUBLISH_NEW => 'secondary',
-                        \app\models\ZenPost::REMOTE_PUBLISH_QUEUED => 'warning',
-                        \app\models\ZenPost::REMOTE_PUBLISH_RUNNING => 'info',
-                        \app\models\ZenPost::REMOTE_PUBLISH_SUCCESS => 'success',
-                        \app\models\ZenPost::REMOTE_PUBLISH_ERROR => 'danger',
+                        ZenPostPublishAttempt::STATUS_NEW => 'secondary',
+                        ZenPostPublishAttempt::STATUS_QUEUED => 'warning',
+                        ZenPostPublishAttempt::STATUS_RUNNING => 'info',
+                        ZenPostPublishAttempt::STATUS_SUCCESS => 'success',
+                        ZenPostPublishAttempt::STATUS_ERROR => 'danger',
                     ];
-                    $class = $classMap[$m->remote_publish_status] ?? 'secondary';
+                    $class = $classMap[$status] ?? 'secondary';
                     $badge = Html::tag('span', $label, ['class' => "badge bg-{$class}"]);
+                    if ($attempt === null) {
+                        return $badge;
+                    }
                     $link = Html::a('Результат', ['/admin/zen-post/send-log', 'account_id' => $m->account_id, 'id' => $m->id], ['class' => 'ms-2']);
                     return $badge . $link;
                 },
             ],
             [
                 'class' => 'yii\grid\ActionColumn',
-                'template' => '{update} {set-posted} {set-pending} {delete}',
+                'template' => '{update} {send} {set-posted} {set-pending}',
                 'buttons' => [
+                    'send' => function ($url, $model) {
+                        $label = $model->latestPublishAttempt === null ? 'Отправить' : 'Отправить снова';
+                        return Html::a($label, ['/admin/zen-post/send', 'account_id' => $model->account_id, 'id' => $model->id], [
+                            'class' => 'btn btn-sm btn-primary',
+                            'data-method' => 'post',
+                        ]);
+                    },
                     'set-posted' => function ($url, $model) {
                         if ($model->status === ZenPost::STATUS_POSTED) return '';
                         return Html::a('Запощено', ['/admin/zen-post/set-status', 'account_id' => $model->account_id, 'id' => $model->id, 'status' => ZenPost::STATUS_POSTED], ['class' => 'btn btn-sm btn-success', 'data-method' => 'post']);
@@ -76,18 +85,9 @@ $this->params['breadcrumbs'][] = $this->title;
                         if ($model->status === ZenPost::STATUS_PENDING) return '';
                         return Html::a('В очередь', ['/admin/zen-post/set-status', 'account_id' => $model->account_id, 'id' => $model->id, 'status' => ZenPost::STATUS_PENDING], ['class' => 'btn btn-sm btn-warning', 'data-method' => 'post']);
                     },
-                    'delete' => function ($url, $model) {
-                        return Html::a('Удалить', ['/admin/zen-post/delete', 'account_id' => $model->account_id, 'id' => $model->id], [
-                            'title' => 'Удалить',
-                            'data-confirm-modal' => 'Удалить этот пост?',
-                            'data-confirm-title' => 'Удалить пост',
-                            'data-method' => 'post',
-                            'data-pjax' => '0',
-                        ]);
-                    },
                 ],
                 'urlCreator' => function ($action, $model) {
-                    if (in_array($action, ['update', 'delete'], true)) {
+                    if ($action === 'update') {
                         return ['/admin/zen-post/' . $action, 'account_id' => $model->account_id, 'id' => $model->id];
                     }
                     return '#';

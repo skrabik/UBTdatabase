@@ -2,41 +2,55 @@
 
 namespace app\jobs;
 
-use app\models\ZenPost;
+use app\models\ZenPostPublishAttempt;
 use Yii;
 use yii\base\BaseObject;
 use yii\queue\JobInterface;
 
 class SendZenPostJob extends BaseObject implements JobInterface
 {
-    public int $postId;
+    public int $attemptId;
 
     public function execute($queue): void
     {
-        $post = ZenPost::findOne($this->postId);
-        if ($post === null) {
+        $attempt = ZenPostPublishAttempt::find()
+            ->with(['post.account'])
+            ->andWhere(['id' => $this->attemptId])
+            ->one();
+
+        if ($attempt === null) {
             Yii::warning([
-                'msg' => 'Queue job skipped: post not found',
-                'post_id' => $this->postId,
+                'msg' => 'Queue job skipped: publish attempt not found',
+                'attempt_id' => $this->attemptId,
             ], __METHOD__);
             return;
         }
 
-        $post->remote_publish_status = ZenPost::REMOTE_PUBLISH_RUNNING;
-        $post->remote_publish_started_at = time();
-        $post->remote_publish_finished_at = null;
-        $post->remote_publish_message = 'Запрос выполняется...';
-        $post->save(false, [
-            'remote_publish_status',
-            'remote_publish_started_at',
-            'remote_publish_finished_at',
-            'remote_publish_message',
+        $post = $attempt->post;
+        if ($post === null) {
+            $this->finishWithError($attempt, 'Пост не найден.', [
+                'status' => 'error',
+                'message' => 'Пост не найден.',
+                'logs' => [],
+            ]);
+            return;
+        }
+
+        $attempt->status = ZenPostPublishAttempt::STATUS_RUNNING;
+        $attempt->started_at = time();
+        $attempt->finished_at = null;
+        $attempt->message = 'Запрос выполняется...';
+        $attempt->save(false, [
+            'status',
+            'started_at',
+            'finished_at',
+            'message',
             'updated_at',
         ]);
 
         $account = $post->account;
         if ($account === null) {
-            $this->finishWithError($post, 'Аккаунт не найден.', [
+            $this->finishWithError($attempt, 'Аккаунт не найден.', [
                 'status' => 'error',
                 'account_slug' => '',
                 'message' => 'Аккаунт не найден.',
@@ -47,7 +61,7 @@ class SendZenPostJob extends BaseObject implements JobInterface
 
         $url = Yii::$app->params['postArticleUrl'] ?? '';
         if ($url === '') {
-            $this->finishWithError($post, 'POST_ARTICLE_URL не задан.', [
+            $this->finishWithError($attempt, 'POST_ARTICLE_URL не задан.', [
                 'status' => 'error',
                 'account_slug' => $account->slug,
                 'message' => 'POST_ARTICLE_URL не задан.',
@@ -88,7 +102,7 @@ class SendZenPostJob extends BaseObject implements JobInterface
             $httpCode = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
             curl_close($ch);
         } catch (\Throwable $e) {
-            $this->finishWithError($post, $e->getMessage(), [
+            $this->finishWithError($attempt, $e->getMessage(), [
                 'status' => 'error',
                 'account_slug' => $account->slug,
                 'message' => $e->getMessage(),
@@ -98,7 +112,7 @@ class SendZenPostJob extends BaseObject implements JobInterface
         }
 
         if ($raw === false || $curlError !== '') {
-            $this->finishWithError($post, $curlError ?: 'Ошибка curl запроса.', [
+            $this->finishWithError($attempt, $curlError ?: 'Ошибка curl запроса.', [
                 'status' => 'error',
                 'account_slug' => $account->slug,
                 'message' => $curlError ?: 'Ошибка curl запроса.',
@@ -109,7 +123,7 @@ class SendZenPostJob extends BaseObject implements JobInterface
 
         $data = json_decode($raw, true);
         if (!is_array($data)) {
-            $this->finishWithError($post, 'Внешний сервис вернул невалидный JSON.', [
+            $this->finishWithError($attempt, 'Внешний сервис вернул невалидный JSON.', [
                 'status' => 'error',
                 'account_slug' => $account->slug,
                 'message' => 'Внешний сервис вернул невалидный JSON.',
@@ -119,26 +133,26 @@ class SendZenPostJob extends BaseObject implements JobInterface
         }
 
         if ($httpCode >= 400) {
-            $this->finishWithError($post, 'Внешний сервис вернул HTTP ' . $httpCode . '.', $data);
+            $this->finishWithError($attempt, 'Внешний сервис вернул HTTP ' . $httpCode . '.', $data);
             return;
         }
 
-        $post->remote_publish_status = ($data['status'] ?? null) === 'ok'
-            ? ZenPost::REMOTE_PUBLISH_SUCCESS
-            : ZenPost::REMOTE_PUBLISH_ERROR;
-        $post->remote_publish_message = (string) ($data['message'] ?? '');
-        $post->remote_publish_logs_json = json_encode(
+        $attempt->status = ($data['status'] ?? null) === 'ok'
+            ? ZenPostPublishAttempt::STATUS_SUCCESS
+            : ZenPostPublishAttempt::STATUS_ERROR;
+        $attempt->message = (string) ($data['message'] ?? '');
+        $attempt->logs_json = json_encode(
             is_array($data['logs'] ?? null) ? array_values($data['logs']) : [],
             JSON_UNESCAPED_UNICODE
         );
-        $post->remote_publish_response_json = json_encode($data, JSON_UNESCAPED_UNICODE);
-        $post->remote_publish_finished_at = time();
-        $post->save(false, [
-            'remote_publish_status',
-            'remote_publish_message',
-            'remote_publish_logs_json',
-            'remote_publish_response_json',
-            'remote_publish_finished_at',
+        $attempt->response_json = json_encode($data, JSON_UNESCAPED_UNICODE);
+        $attempt->finished_at = time();
+        $attempt->save(false, [
+            'status',
+            'message',
+            'logs_json',
+            'response_json',
+            'finished_at',
             'updated_at',
         ]);
 
@@ -150,28 +164,31 @@ class SendZenPostJob extends BaseObject implements JobInterface
         ], __METHOD__);
     }
 
-    protected function finishWithError(ZenPost $post, string $message, array $responseData): void
+    protected function finishWithError(ZenPostPublishAttempt $attempt, string $message, array $responseData): void
     {
-        $post->remote_publish_status = ZenPost::REMOTE_PUBLISH_ERROR;
-        $post->remote_publish_message = $message;
-        $post->remote_publish_logs_json = json_encode(
+        $post = $attempt->post;
+
+        $attempt->status = ZenPostPublishAttempt::STATUS_ERROR;
+        $attempt->message = $message;
+        $attempt->logs_json = json_encode(
             is_array($responseData['logs'] ?? null) ? array_values($responseData['logs']) : [],
             JSON_UNESCAPED_UNICODE
         );
-        $post->remote_publish_response_json = json_encode($responseData, JSON_UNESCAPED_UNICODE);
-        $post->remote_publish_finished_at = time();
-        $post->save(false, [
-            'remote_publish_status',
-            'remote_publish_message',
-            'remote_publish_logs_json',
-            'remote_publish_response_json',
-            'remote_publish_finished_at',
+        $attempt->response_json = json_encode($responseData, JSON_UNESCAPED_UNICODE);
+        $attempt->finished_at = time();
+        $attempt->save(false, [
+            'status',
+            'message',
+            'logs_json',
+            'response_json',
+            'finished_at',
             'updated_at',
         ]);
 
         Yii::warning([
             'msg' => 'Queue job: ошибка отправки поста',
-            'post_id' => $post->id,
+            'post_id' => $post?->id,
+            'attempt_id' => $attempt->id,
             'error' => $message,
         ], __METHOD__);
     }

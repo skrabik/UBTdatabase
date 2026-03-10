@@ -4,6 +4,7 @@ namespace app\modules\admin\controllers;
 
 use app\models\ZenAccount;
 use app\models\ZenPost;
+use app\models\ZenPostPublishAttempt;
 use Yii;
 use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
@@ -26,7 +27,7 @@ class ZenPostController extends Controller
     {
         $this->findAccount($account_id);
         $dataProvider = new ActiveDataProvider([
-            'query' => ZenPost::find()->with('account')->andWhere(['account_id' => $account_id])->orderBy(['id' => SORT_DESC]),
+            'query' => ZenPost::find()->with(['account', 'latestPublishAttempt'])->andWhere(['account_id' => $account_id])->orderBy(['id' => SORT_DESC]),
             'pagination' => ['pageSize' => 20],
         ]);
 
@@ -42,13 +43,9 @@ class ZenPostController extends Controller
         $model = new ZenPost();
         $model->account_id = $account_id;
 
-        if ($model->load(Yii::$app->request->post())) {
-            Yii::$app->params['skipPostArticleSend'] = true;
-            if ($model->save()) {
-                $model->enqueueRemotePublish();
-                Yii::$app->session->setFlash('success', 'Пост создан.');
-                return $this->redirect(['/admin/zen-post/send-log', 'account_id' => $account_id, 'id' => $model->id]);
-            }
+        if ($model->load(Yii::$app->request->post()) && $model->save()) {
+            Yii::$app->session->setFlash('success', 'Пост создан. Для отправки используйте кнопку "Отправить".');
+            return $this->redirect(['/admin/zen-post/index', 'account_id' => $account_id]);
         }
 
         return $this->render('form', ['model' => $model, 'accountId' => $account_id]);
@@ -101,7 +98,28 @@ class ZenPostController extends Controller
     }
 
     /**
-     * Страница результата отправки поста на внешний сервис.
+     * Ставит пост в очередь на отправку по кнопке.
+     */
+    public function actionSend(int $account_id, int $id): \yii\web\Response
+    {
+        $this->findAccount($account_id);
+        $model = $this->findModel($id);
+        if ((int) $model->account_id !== (int) $account_id) {
+            throw new NotFoundHttpException('Пост не принадлежит этому аккаунту.');
+        }
+
+        $attempt = $model->enqueueRemotePublish();
+        $flashType = $attempt->status === ZenPostPublishAttempt::STATUS_ERROR ? 'danger' : 'success';
+        $flashMessage = $attempt->status === ZenPostPublishAttempt::STATUS_ERROR
+            ? 'Не удалось поставить пост в очередь.'
+            : 'Пост поставлен в очередь на отправку.';
+        Yii::$app->session->setFlash($flashType, $flashMessage);
+
+        return $this->redirect(['/admin/zen-post/send-log', 'account_id' => $account_id, 'id' => $model->id]);
+    }
+
+    /**
+     * Страница результата последней отправки поста на внешний сервис.
      */
     public function actionSendLog(int $account_id, int $id): string
     {
@@ -142,19 +160,40 @@ class ZenPostController extends Controller
 
     protected function buildSendLogPayload(ZenPost $model): array
     {
-        $responseData = $model->getRemotePublishResponse();
-        $logs = $model->getRemotePublishLogs();
-        $labels = ZenPost::remotePublishStatusLabels();
+        $attempt = $this->findLatestAttempt($model);
+        if ($attempt === null) {
+            return [
+                'job_id' => null,
+                'queue_status' => ZenPostPublishAttempt::STATUS_NEW,
+                'queue_status_label' => ZenPostPublishAttempt::statusLabels()[ZenPostPublishAttempt::STATUS_NEW],
+                'is_finished' => true,
+                'message' => 'Отправка ещё не запускалась.',
+                'response' => [],
+                'logs' => [],
+            ];
+        }
+
+        $responseData = $attempt->getResponse();
+        $logs = $attempt->getLogs();
+        $labels = ZenPostPublishAttempt::statusLabels();
 
         return [
-            'job_id' => $model->remote_job_id,
-            'queue_status' => $model->remote_publish_status,
-            'queue_status_label' => $labels[$model->remote_publish_status] ?? $model->remote_publish_status,
-            'is_finished' => in_array($model->remote_publish_status, [ZenPost::REMOTE_PUBLISH_SUCCESS, ZenPost::REMOTE_PUBLISH_ERROR], true),
-            'message' => $model->remote_publish_message ?: ($responseData['message'] ?? ''),
+            'job_id' => $attempt->job_id,
+            'queue_status' => $attempt->status,
+            'queue_status_label' => $labels[$attempt->status] ?? $attempt->status,
+            'is_finished' => in_array($attempt->status, [ZenPostPublishAttempt::STATUS_SUCCESS, ZenPostPublishAttempt::STATUS_ERROR], true),
+            'message' => $attempt->message ?: ($responseData['message'] ?? ''),
             'response' => $responseData,
             'logs' => $logs,
         ];
+    }
+
+    protected function findLatestAttempt(ZenPost $model): ?ZenPostPublishAttempt
+    {
+        return $model->latestPublishAttempt ?: ZenPostPublishAttempt::find()
+            ->andWhere(['zen_post_id' => $model->id])
+            ->orderBy(['id' => SORT_DESC])
+            ->one();
     }
 
     protected function findAccount(int $id): ZenAccount

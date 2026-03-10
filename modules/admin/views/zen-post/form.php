@@ -14,6 +14,7 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="zen-post-form">
     <h1><?= Html::encode($this->title) ?></h1>
+    <p class="text-muted">После сохранения пост можно отправить в сервис автопостинга кнопкой "Отправить" в списке постов.</p>
 
     <?php $form = ActiveForm::begin(); ?>
 

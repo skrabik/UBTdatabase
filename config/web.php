@@ -77,6 +77,7 @@ $config = [
                 // Admin: посты вложены в аккаунт — zen-account/{account_id}/zen-post/...
                 ['pattern' => 'admin/zen-account/<account_id:\d+>/zen-post', 'route' => 'admin/zen-post/index'],
                 ['pattern' => 'admin/zen-account/<account_id:\d+>/zen-post/create', 'route' => 'admin/zen-post/create'],
+                ['pattern' => 'admin/zen-account/<account_id:\d+>/zen-post/send/<id:\d+>', 'route' => 'admin/zen-post/send'],
                 ['pattern' => 'admin/zen-account/<account_id:\d+>/zen-post/send-log/<id:\d+>', 'route' => 'admin/zen-post/send-log'],
                 ['pattern' => 'admin/zen-account/<account_id:\d+>/zen-post/send-log-data/<id:\d+>', 'route' => 'admin/zen-post/send-log-data'],
                 ['pattern' => 'admin/zen-account/<account_id:\d+>/zen-post/update/<id:\d+>', 'route' => 'admin/zen-post/update'],

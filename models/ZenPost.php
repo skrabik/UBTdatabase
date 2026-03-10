@@ -11,31 +11,20 @@ use yii\db\ActiveRecord;
  * @property string $title
  * @property string|null $content
  * @property string $status
- * @property string|null $remote_job_id
- * @property string $remote_publish_status
- * @property string|null $remote_publish_message
- * @property string|null $remote_publish_logs_json
- * @property string|null $remote_publish_response_json
- * @property int|null $remote_publish_started_at
- * @property int|null $remote_publish_finished_at
  * @property int|null $scheduled_at
  * @property int|null $posted_at
  * @property int|null $created_at
  * @property int|null $updated_at
  *
  * @property ZenAccount $account
+ * @property ZenPostPublishAttempt[] $publishAttempts
+ * @property ZenPostPublishAttempt|null $latestPublishAttempt
  */
 class ZenPost extends ActiveRecord
 {
     public const STATUS_DRAFT = 'draft';
     public const STATUS_PENDING = 'pending';
     public const STATUS_POSTED = 'posted';
-
-    public const REMOTE_PUBLISH_NEW = 'new';
-    public const REMOTE_PUBLISH_QUEUED = 'queued';
-    public const REMOTE_PUBLISH_RUNNING = 'running';
-    public const REMOTE_PUBLISH_SUCCESS = 'success';
-    public const REMOTE_PUBLISH_ERROR = 'error';
 
     public static function tableName(): string
     {
@@ -51,29 +40,15 @@ class ZenPost extends ActiveRecord
         ];
     }
 
-    public static function remotePublishStatusLabels(): array
-    {
-        return [
-            self::REMOTE_PUBLISH_NEW => 'Не запускалось',
-            self::REMOTE_PUBLISH_QUEUED => 'В очереди',
-            self::REMOTE_PUBLISH_RUNNING => 'Выполняется',
-            self::REMOTE_PUBLISH_SUCCESS => 'Успешно',
-            self::REMOTE_PUBLISH_ERROR => 'Ошибка',
-        ];
-    }
-
     public function rules(): array
     {
         return [
             [['account_id', 'title'], 'required'],
-            [['account_id', 'scheduled_at', 'posted_at', 'created_at', 'updated_at', 'remote_publish_started_at', 'remote_publish_finished_at'], 'integer'],
+            [['account_id', 'scheduled_at', 'posted_at', 'created_at', 'updated_at'], 'integer'],
             [['status'], 'in', 'range' => array_keys(self::statusLabels())],
-            [['remote_publish_status'], 'in', 'range' => array_keys(self::remotePublishStatusLabels())],
             [['status'], 'default', 'value' => self::STATUS_PENDING],
-            [['remote_publish_status'], 'default', 'value' => self::REMOTE_PUBLISH_NEW],
             [['title'], 'string', 'max' => 500],
-            [['content', 'remote_publish_message', 'remote_publish_logs_json', 'remote_publish_response_json'], 'string'],
-            [['remote_job_id'], 'string', 'max' => 64],
+            [['content'], 'string'],
             [['account_id'], 'exist', 'targetClass' => ZenAccount::class, 'targetAttribute' => 'id'],
         ];
     }
@@ -86,11 +61,6 @@ class ZenPost extends ActiveRecord
             'title' => 'Заголовок',
             'content' => 'Текст',
             'status' => 'Статус',
-            'remote_job_id' => 'ID job',
-            'remote_publish_status' => 'Статус отправки',
-            'remote_publish_message' => 'Сообщение отправки',
-            'remote_publish_started_at' => 'Запуск отправки',
-            'remote_publish_finished_at' => 'Завершение отправки',
             'scheduled_at' => 'Запланировано на',
             'posted_at' => 'Опубликовано в',
             'created_at' => 'Создан',
@@ -103,16 +73,14 @@ class ZenPost extends ActiveRecord
         return $this->hasOne(ZenAccount::class, ['id' => 'account_id']);
     }
 
-    public function getRemotePublishLogs(): array
+    public function getPublishAttempts()
     {
-        $decoded = json_decode((string) $this->remote_publish_logs_json, true);
-        return is_array($decoded) ? array_values(array_map('strval', $decoded)) : [];
+        return $this->hasMany(ZenPostPublishAttempt::class, ['zen_post_id' => 'id'])->orderBy(['id' => SORT_DESC]);
     }
 
-    public function getRemotePublishResponse(): array
+    public function getLatestPublishAttempt()
     {
-        $decoded = json_decode((string) $this->remote_publish_response_json, true);
-        return is_array($decoded) ? $decoded : [];
+        return $this->hasOne(ZenPostPublishAttempt::class, ['zen_post_id' => 'id'])->orderBy(['id' => SORT_DESC]);
     }
 
     public function beforeSave($insert): bool
@@ -127,39 +95,35 @@ class ZenPost extends ActiveRecord
         return false;
     }
 
-    public function afterSave($insert, $changedAttributes)
+    public function enqueueRemotePublish(): ZenPostPublishAttempt
     {
-        parent::afterSave($insert, $changedAttributes);
-        if ($insert && !(\Yii::$app->params['skipPostArticleSend'] ?? false)) {
-            $this->enqueueRemotePublish();
-        }
-    }
+        $attempt = new ZenPostPublishAttempt([
+            'zen_post_id' => (int) $this->id,
+            'status' => ZenPostPublishAttempt::STATUS_NEW,
+            'logs_json' => json_encode([], JSON_UNESCAPED_UNICODE),
+        ]);
+        $attempt->save(false);
 
-    /**
-     * Ставит публикацию поста в очередь и связывает job с записью статьи.
-     */
-    public function enqueueRemotePublish(): void
-    {
         try {
             $jobId = \Yii::$app->queue->push(new SendZenPostJob([
-                'postId' => (int) $this->id,
+                'attemptId' => (int) $attempt->id,
             ]));
 
-            $this->remote_job_id = (string) $jobId;
-            $this->remote_publish_status = self::REMOTE_PUBLISH_QUEUED;
-            $this->remote_publish_message = 'Задача поставлена в очередь.';
-            $this->remote_publish_logs_json = json_encode([], JSON_UNESCAPED_UNICODE);
-            $this->remote_publish_response_json = null;
-            $this->remote_publish_started_at = null;
-            $this->remote_publish_finished_at = null;
-            $this->save(false, [
-                'remote_job_id',
-                'remote_publish_status',
-                'remote_publish_message',
-                'remote_publish_logs_json',
-                'remote_publish_response_json',
-                'remote_publish_started_at',
-                'remote_publish_finished_at',
+            $attempt->job_id = (string) $jobId;
+            $attempt->status = ZenPostPublishAttempt::STATUS_QUEUED;
+            $attempt->message = 'Задача поставлена в очередь.';
+            $attempt->logs_json = json_encode([], JSON_UNESCAPED_UNICODE);
+            $attempt->response_json = null;
+            $attempt->started_at = null;
+            $attempt->finished_at = null;
+            $attempt->save(false, [
+                'job_id',
+                'status',
+                'message',
+                'logs_json',
+                'response_json',
+                'started_at',
+                'finished_at',
                 'updated_at',
             ]);
 
@@ -169,21 +133,21 @@ class ZenPost extends ActiveRecord
                 'job_id' => $jobId,
             ], __METHOD__);
         } catch (\Throwable $e) {
-            $this->remote_publish_status = self::REMOTE_PUBLISH_ERROR;
-            $this->remote_publish_message = $e->getMessage();
-            $this->remote_publish_logs_json = json_encode([], JSON_UNESCAPED_UNICODE);
-            $this->remote_publish_response_json = json_encode([
+            $attempt->status = ZenPostPublishAttempt::STATUS_ERROR;
+            $attempt->message = $e->getMessage();
+            $attempt->logs_json = json_encode([], JSON_UNESCAPED_UNICODE);
+            $attempt->response_json = json_encode([
                 'status' => 'error',
                 'message' => $e->getMessage(),
                 'logs' => [],
             ], JSON_UNESCAPED_UNICODE);
-            $this->remote_publish_finished_at = time();
-            $this->save(false, [
-                'remote_publish_status',
-                'remote_publish_message',
-                'remote_publish_logs_json',
-                'remote_publish_response_json',
-                'remote_publish_finished_at',
+            $attempt->finished_at = time();
+            $attempt->save(false, [
+                'status',
+                'message',
+                'logs_json',
+                'response_json',
+                'finished_at',
                 'updated_at',
             ]);
 
@@ -193,5 +157,7 @@ class ZenPost extends ActiveRecord
                 'error' => $e->getMessage(),
             ], __METHOD__);
         }
+
+        return $attempt;
     }
 }
