@@ -37,12 +37,16 @@
           <mxGeometry x="700" y="340" width="260" height="110" as="geometry"/>
         </mxCell>
 
-        <mxCell id="zen_post" value="&lt;b&gt;zen_post&lt;/b&gt;&lt;hr/&gt;PK id&lt;br/&gt;FK account_id -&gt; zen_account.id&lt;br/&gt;title&lt;br/&gt;content&lt;br/&gt;status&lt;br/&gt;scheduled_at&lt;br/&gt;posted_at&lt;br/&gt;remote_job_id&lt;br/&gt;remote_publish_status&lt;br/&gt;remote_publish_message&lt;br/&gt;remote_publish_logs_json&lt;br/&gt;remote_publish_response_json&lt;br/&gt;remote_publish_started_at&lt;br/&gt;remote_publish_finished_at&lt;br/&gt;created_at&lt;br/&gt;updated_at" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=left;spacingLeft=8;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="340" y="620" width="320" height="320" as="geometry"/>
+        <mxCell id="zen_post" value="&lt;b&gt;zen_post&lt;/b&gt;&lt;hr/&gt;PK id&lt;br/&gt;FK account_id -&gt; zen_account.id&lt;br/&gt;title&lt;br/&gt;content&lt;br/&gt;status&lt;br/&gt;scheduled_at&lt;br/&gt;posted_at&lt;br/&gt;created_at&lt;br/&gt;updated_at" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=left;spacingLeft=8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="340" y="620" width="320" height="210" as="geometry"/>
         </mxCell>
 
-        <mxCell id="note_queue" value="&lt;b&gt;Queue note&lt;/b&gt;&lt;hr/&gt;Проект использует &lt;code&gt;yii\queue\file\Queue&lt;/code&gt;.&lt;br/&gt;Отдельной таблицы очереди в БД нет.&lt;br/&gt;Состояние job хранится в &lt;code&gt;zen_post&lt;/code&gt; через remote_* поля." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;align=left;spacingLeft=8;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="740" y="650" width="340" height="140" as="geometry"/>
+        <mxCell id="zen_post_publish_attempt" value="&lt;b&gt;zen_post_publish_attempt&lt;/b&gt;&lt;hr/&gt;PK id&lt;br/&gt;FK zen_post_id -&gt; zen_post.id&lt;br/&gt;job_id&lt;br/&gt;status&lt;br/&gt;message&lt;br/&gt;logs_json&lt;br/&gt;response_json&lt;br/&gt;started_at&lt;br/&gt;finished_at&lt;br/&gt;created_at&lt;br/&gt;updated_at" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=left;spacingLeft=8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="740" y="620" width="340" height="250" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="note_queue" value="&lt;b&gt;Queue note&lt;/b&gt;&lt;hr/&gt;Проект использует &lt;code&gt;yii\queue\file\Queue&lt;/code&gt;.&lt;br/&gt;Отдельной таблицы очереди в БД нет.&lt;br/&gt;Состояние job и результаты отправки хранятся в &lt;code&gt;zen_post_publish_attempt&lt;/code&gt;." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;align=left;spacingLeft=8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="650" width="340" height="140" as="geometry"/>
         </mxCell>
 
         <mxCell id="e_auth_rule_item" style="endArrow=block;endFill=1;html=1;strokeColor=#d6b656;" edge="1" parent="1" source="auth_rule" target="auth_item">
@@ -73,6 +77,9 @@
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
         <mxCell id="e_account_post" style="endArrow=block;endFill=1;html=1;strokeColor=#b85450;" edge="1" parent="1" source="zen_account" target="zen_post">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_post_publish_attempt" style="endArrow=block;endFill=1;html=1;strokeColor=#d79b00;" edge="1" parent="1" source="zen_post" target="zen_post_publish_attempt">
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
       </root>
