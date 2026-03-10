@@ -20,8 +20,8 @@ while ! php -r "
 done
 echo "MySQL is ready."
 
-# Установка зависимостей, если нет vendor
-if [ ! -f vendor/autoload.php ]; then
+# Установка зависимостей, если vendor отсутствует или lock-файл обновился
+if [ ! -f vendor/autoload.php ] || [ composer.lock -nt vendor/autoload.php ]; then
     echo "Running composer install..."
     composer install --no-interaction --prefer-dist --optimize-autoloader
 fi
