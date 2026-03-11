@@ -62,6 +62,7 @@ $config = [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
+                'phpinfo' => 'site/php-info',
                 // API каналов (id — число, slug — латиница/цифры/дефис)
                 'GET api/channels' => 'api/channel/index',
                 'GET api/channels/<idOrSlug:\d+|[a-z0-9\-]+>' => 'api/channel/view',

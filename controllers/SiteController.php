@@ -15,4 +15,15 @@ class SiteController extends Controller
         }
         return $this->redirect(['/admin/default/index']);
     }
+
+    public function actionPhpInfo(): Response
+    {
+        ob_start();
+        phpinfo();
+        $content = (string) ob_get_clean();
+
+        Yii::$app->response->format = Response::FORMAT_RAW;
+
+        return Yii::$app->response->setContent($content);
+    }
 }
