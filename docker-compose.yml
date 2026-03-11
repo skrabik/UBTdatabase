@@ -7,6 +7,8 @@ services:
       - "9000:9000"
     volumes:
       - .:/var/www/html
+      - runtime_data:/var/www/html/runtime
+      - assets_data:/var/www/html/web/assets
     environment:
       MYSQL_HOST: mysql
       MYSQL_DATABASE: ubtdatabase
@@ -36,3 +38,5 @@ services:
 
 volumes:
   mysql_data:
+  runtime_data:
+  assets_data:

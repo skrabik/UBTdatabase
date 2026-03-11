@@ -148,35 +148,72 @@ echo Html::endTag('div');
 
 $this->registerJs(<<<JS
 (function() {
-    document.getElementById('logout-confirm-btn').addEventListener('click', function() {
-        document.getElementById('logout-form').submit();
-    });
-
+    var logoutConfirmBtn = document.getElementById('logout-confirm-btn');
+    var logoutForm = document.getElementById('logout-form');
     var confirmModal = document.getElementById('confirmModal');
     var confirmTitle = document.getElementById('confirmModalLabel');
     var confirmBody = document.getElementById('confirmModalBody');
     var confirmSubmit = document.getElementById('confirm-modal-submit');
-    var pendingLink = null;
+
+    if (logoutConfirmBtn && logoutForm) {
+        logoutConfirmBtn.addEventListener('click', function() {
+            logoutForm.submit();
+        });
+    }
+
+    if (!confirmModal || !confirmTitle || !confirmBody || !confirmSubmit) {
+        return;
+    }
+
+    var modal = bootstrap.Modal.getOrCreateInstance(confirmModal);
+    var pendingAction = null;
+    var isSubmitting = false;
 
     document.body.addEventListener('click', function(e) {
         var el = e.target.closest('a[data-confirm-modal], a[data-confirm]');
-        if (!el) return;
+        if (!el) {
+            return;
+        }
+
+        // Полностью останавливаем исходный клик, чтобы Yii не выполнил data-method
+        // раньше, чем пользователь нажмет кнопку подтверждения в модальном окне.
         e.preventDefault();
-        pendingLink = el;
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+
+        pendingAction = {
+            href: el.getAttribute('href'),
+            method: (el.getAttribute('data-method') || 'get').toLowerCase(),
+        };
+        isSubmitting = false;
+        confirmSubmit.disabled = false;
         confirmTitle.textContent = el.getAttribute('data-confirm-title') || 'Подтверждение';
         confirmBody.textContent = el.getAttribute('data-confirm-modal') || el.getAttribute('data-confirm') || 'Вы уверены?';
-        var modal = new bootstrap.Modal(confirmModal);
         modal.show();
     }, true);
 
-    confirmSubmit.addEventListener('click', function() {
-        if (!pendingLink) return;
-        var href = pendingLink.getAttribute('href');
-        var method = (pendingLink.getAttribute('data-method') || 'get').toLowerCase();
-        if (method === 'post') {
+    confirmModal.addEventListener('hidden.bs.modal', function() {
+        if (!isSubmitting) {
+            pendingAction = null;
+        }
+        isSubmitting = false;
+        confirmSubmit.disabled = false;
+    });
+
+    confirmSubmit.addEventListener('click', function(e) {
+        e.preventDefault();
+
+        if (!pendingAction || isSubmitting) {
+            return;
+        }
+
+        isSubmitting = true;
+        confirmSubmit.disabled = true;
+
+        if (pendingAction.method === 'post') {
             var form = document.createElement('form');
             form.method = 'post';
-            form.action = href;
+            form.action = pendingAction.href;
             form.style.display = 'none';
             var csrfParam = document.querySelector('meta[name="csrf-param"]');
             var csrfToken = document.querySelector('meta[name="csrf-token"]');
@@ -189,11 +226,13 @@ $this->registerJs(<<<JS
             }
             document.body.appendChild(form);
             form.submit();
-        } else {
-            window.location.href = href;
+            return;
         }
-        bootstrap.Modal.getInstance(confirmModal).hide();
-        pendingLink = null;
+
+        var href = pendingAction.href;
+        pendingAction = null;
+        modal.hide();
+        window.location.href = href;
     });
 })();
 JS
