@@ -22,8 +22,10 @@ class SiteController extends Controller
         phpinfo();
         $content = (string) ob_get_clean();
 
-        Yii::$app->response->format = Response::FORMAT_RAW;
+        $response = Yii::$app->response;
+        $response->format = Response::FORMAT_RAW;
+        $response->content = $content;
 
-        return Yii::$app->response->setContent($content);
+        return $response;
     }
 }
