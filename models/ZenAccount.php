@@ -2,6 +2,7 @@
 
 namespace app\models;
 
+use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
 use yii\helpers\Inflector;
 
@@ -17,6 +18,7 @@ use yii\helpers\Inflector;
  * @property string|null $proxy_ip
  * @property int|null $created_at
  * @property int|null $updated_at
+ * @property int|null $deleted_at
  *
  * @property Theme[] $themeRelations
  * @property ZenPost[] $posts
@@ -34,6 +36,11 @@ class ZenAccount extends ActiveRecord
         return '{{%zen_account}}';
     }
 
+    public static function find(): ActiveQuery
+    {
+        return parent::find()->andWhere(['deleted_at' => null]);
+    }
+
     public function rules(): array
     {
         return [
@@ -42,6 +49,7 @@ class ZenAccount extends ActiveRecord
             [['slug'], 'string', 'max' => 255],
             [['slug'], 'match', 'pattern' => '/^[a-z0-9\-]+$/', 'when' => function () { return $this->slug !== ''; }],
             [['slug'], 'unique', 'targetAttribute' => 'slug', 'filter' => function ($query) {
+                $query->andWhere(['deleted_at' => null]);
                 if (!$this->isNewRecord) {
                     $query->andWhere(['not', ['id' => $this->id]]);
                 }
@@ -53,7 +61,7 @@ class ZenAccount extends ActiveRecord
             [['login', 'password'], 'string', 'max' => 2048],
             [['proxy_ip'], 'string', 'max' => 255],
             [['description'], 'string'],
-            [['created_at', 'updated_at'], 'integer'],
+            [['created_at', 'updated_at', 'deleted_at'], 'integer'],
         ];
     }
 
@@ -82,6 +90,7 @@ class ZenAccount extends ActiveRecord
             'proxy_ip' => 'Прокси IP',
             'created_at' => 'Создан',
             'updated_at' => 'Обновлён',
+            'deleted_at' => 'Удалён',
         ];
     }
 
@@ -140,6 +149,40 @@ class ZenAccount extends ActiveRecord
             return true;
         }
         return false;
+    }
+
+    public function delete()
+    {
+        if ($this->getIsNewRecord()) {
+            return 0;
+        }
+
+        $time = time();
+        $suffix = '--deleted-' . $this->id . '-' . $time;
+        $base = mb_substr((string) $this->slug, 0, max(0, 255 - strlen($suffix)));
+        $transaction = static::getDb()->beginTransaction();
+
+        try {
+            $updated = $this->updateAttributes([
+                'slug' => $base . $suffix,
+                'deleted_at' => $time,
+                'updated_at' => $time,
+            ]);
+            if ($updated === false) {
+                throw new \RuntimeException('Не удалось пометить канал как удалённый.');
+            }
+
+            ZenPost::updateAll(
+                ['deleted_at' => $time, 'updated_at' => $time],
+                ['and', ['account_id' => $this->id], ['deleted_at' => null]]
+            );
+
+            $transaction->commit();
+            return 1;
+        } catch (\Throwable $e) {
+            $transaction->rollBack();
+            throw $e;
+        }
     }
 
     /**

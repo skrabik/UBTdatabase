@@ -3,6 +3,7 @@
 namespace app\models;
 
 use Yii;
+use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
 use yii\web\IdentityInterface;
 
@@ -13,6 +14,7 @@ use yii\web\IdentityInterface;
  * @property string $password_hash
  * @property int|null $created_at
  * @property int|null $updated_at
+ * @property int|null $deleted_at
  */
 class User extends ActiveRecord implements IdentityInterface
 {
@@ -24,19 +26,25 @@ class User extends ActiveRecord implements IdentityInterface
         return '{{%user}}';
     }
 
+    public static function find(): ActiveQuery
+    {
+        return parent::find()->andWhere(['deleted_at' => null]);
+    }
+
     public function rules(): array
     {
         return [
             [['username'], 'required'],
             [['username'], 'string', 'max' => 255],
             [['username'], 'unique', 'filter' => function ($query) {
+                $query->andWhere(['deleted_at' => null]);
                 if (!$this->isNewRecord) {
                     $query->andWhere(['not', ['id' => $this->id]]);
                 }
             }],
             [['password'], 'string', 'min' => 3],
             [['password'], 'required', 'on' => 'create'],
-            [['created_at', 'updated_at'], 'integer'],
+            [['created_at', 'updated_at', 'deleted_at'], 'integer'],
         ];
     }
 
@@ -50,6 +58,7 @@ class User extends ActiveRecord implements IdentityInterface
             'password_hash' => 'Хеш пароля',
             'created_at' => 'Создан',
             'updated_at' => 'Обновлён',
+            'deleted_at' => 'Удалён',
         ];
     }
 
@@ -127,5 +136,23 @@ class User extends ActiveRecord implements IdentityInterface
             return true;
         }
         return false;
+    }
+
+    public function delete()
+    {
+        if ($this->getIsNewRecord()) {
+            return 0;
+        }
+
+        $time = time();
+        $suffix = '__deleted_' . $this->id . '_' . $time;
+        $base = mb_substr((string) $this->username, 0, max(0, 255 - strlen($suffix)));
+        $updated = $this->updateAttributes([
+            'username' => $base . $suffix,
+            'deleted_at' => $time,
+            'updated_at' => $time,
+        ]);
+
+        return $updated === false ? false : 1;
     }
 }

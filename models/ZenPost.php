@@ -3,6 +3,7 @@
 namespace app\models;
 
 use app\jobs\SendZenPostJob;
+use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
 
 /**
@@ -15,6 +16,7 @@ use yii\db\ActiveRecord;
  * @property int|null $posted_at
  * @property int|null $created_at
  * @property int|null $updated_at
+ * @property int|null $deleted_at
  *
  * @property ZenAccount $account
  * @property ZenPostPublishAttempt[] $publishAttempts
@@ -31,6 +33,11 @@ class ZenPost extends ActiveRecord
         return '{{%zen_post}}';
     }
 
+    public static function find(): ActiveQuery
+    {
+        return parent::find()->andWhere(['deleted_at' => null]);
+    }
+
     public static function statusLabels(): array
     {
         return [
@@ -44,7 +51,7 @@ class ZenPost extends ActiveRecord
     {
         return [
             [['account_id', 'title'], 'required'],
-            [['account_id', 'scheduled_at', 'posted_at', 'created_at', 'updated_at'], 'integer'],
+            [['account_id', 'scheduled_at', 'posted_at', 'created_at', 'updated_at', 'deleted_at'], 'integer'],
             [['status'], 'in', 'range' => array_keys(self::statusLabels())],
             [['status'], 'default', 'value' => self::STATUS_PENDING],
             [['title'], 'string', 'max' => 500],
@@ -65,6 +72,7 @@ class ZenPost extends ActiveRecord
             'posted_at' => 'Опубликовано в',
             'created_at' => 'Создан',
             'updated_at' => 'Обновлён',
+            'deleted_at' => 'Удалён',
         ];
     }
 
@@ -159,5 +167,20 @@ class ZenPost extends ActiveRecord
         }
 
         return $attempt;
+    }
+
+    public function delete()
+    {
+        if ($this->getIsNewRecord()) {
+            return 0;
+        }
+
+        $time = time();
+        $updated = $this->updateAttributes([
+            'deleted_at' => $time,
+            'updated_at' => $time,
+        ]);
+
+        return $updated === false ? false : 1;
     }
 }
