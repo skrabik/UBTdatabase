@@ -16,7 +16,7 @@ $this->params['breadcrumbs'][] = $this->title;
     <?php $form = ActiveForm::begin(); ?>
 
     <?= $form->field($model, 'name')->textInput(['maxlength' => true]) ?>
-    <?= $form->field($model, 'slug')->textInput(['maxlength' => true])->hint('Оставьте пустым для автогенерации из названия. Только a-z, 0-9, дефис.') ?>
+    <?= $form->field($model, 'slug')->textInput(['maxlength' => true])->hint('Только a-z, 0-9 и дефис.') ?>
     <?= $form->field($model, 'description')->textarea(['rows' => 3]) ?>
     <?= $form->field($model, 'url')->textInput(['maxlength' => true]) ?>
     <?= $form->field($model, 'themeIds')->checkboxList(

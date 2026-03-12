@@ -34,6 +34,7 @@ class ZenAccountController extends Controller
     public function actionCreate(): string|\yii\web\Response
     {
         $model = new ZenAccount();
+        $model->scenario = ZenAccount::SCENARIO_CREATE;
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             Yii::$app->session->setFlash('success', 'Аккаунт создан.');
@@ -46,6 +47,7 @@ class ZenAccountController extends Controller
     public function actionUpdate(int $id): string|\yii\web\Response
     {
         $model = $this->findModel($id);
+        $model->scenario = ZenAccount::SCENARIO_UPDATE;
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             Yii::$app->session->setFlash('success', 'Аккаунт обновлён.');

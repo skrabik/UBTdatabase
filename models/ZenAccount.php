@@ -23,6 +23,9 @@ use yii\helpers\Inflector;
  */
 class ZenAccount extends ActiveRecord
 {
+    public const SCENARIO_CREATE = 'create';
+    public const SCENARIO_UPDATE = 'update';
+
     /** Массив id тематик для множественного выбора (не хранится в БД). */
     public $themeIds = [];
 
@@ -34,10 +37,9 @@ class ZenAccount extends ActiveRecord
     public function rules(): array
     {
         return [
-            [['name', 'url'], 'required'],
+            [['name', 'slug', 'url', 'login', 'password'], 'required', 'on' => self::SCENARIO_CREATE],
             [['name'], 'string', 'max' => 255],
             [['slug'], 'string', 'max' => 255],
-            [['slug'], 'default', 'value' => ''],
             [['slug'], 'match', 'pattern' => '/^[a-z0-9\-]+$/', 'when' => function () { return $this->slug !== ''; }],
             [['slug'], 'unique', 'targetAttribute' => 'slug', 'filter' => function ($query) {
                 if (!$this->isNewRecord) {
@@ -55,6 +57,16 @@ class ZenAccount extends ActiveRecord
         ];
     }
 
+    public function scenarios(): array
+    {
+        $scenarios = parent::scenarios();
+        $attributes = ['name', 'slug', 'description', 'url', 'theme', 'themeIds', 'login', 'password', 'proxy_ip'];
+        $scenarios[self::SCENARIO_CREATE] = $attributes;
+        $scenarios[self::SCENARIO_UPDATE] = $attributes;
+
+        return $scenarios;
+    }
+
     public function attributeLabels(): array
     {
         return [
@@ -65,7 +77,7 @@ class ZenAccount extends ActiveRecord
             'url' => 'Ссылка на канал',
             'theme' => 'Тематика (текст)',
             'themeIds' => 'Тематики',
-            'login' => 'Логин',
+            'login' => 'Логин (Почта)',
             'password' => 'Пароль',
             'proxy_ip' => 'Прокси IP',
             'created_at' => 'Создан',
@@ -93,9 +105,7 @@ class ZenAccount extends ActiveRecord
     public function beforeValidate()
     {
         if (parent::beforeValidate()) {
-            if (trim((string) $this->slug) === '') {
-                $this->slug = $this->generateSlug();
-            } else {
+            if (trim((string) $this->slug) !== '') {
                 $this->slug = $this->normalizeSlug($this->slug);
             }
             if (!is_array($this->themeIds)) {
@@ -130,21 +140,6 @@ class ZenAccount extends ActiveRecord
             return true;
         }
         return false;
-    }
-
-    /**
-     * Генерирует уникальный slug из названия.
-     */
-    protected function generateSlug(): string
-    {
-        $base = Inflector::slug(Inflector::transliterate($this->name), '-', true);
-        $base = preg_replace('/[^a-z0-9\-]/', '', $base) ?: 'channel';
-        $slug = $base;
-        $n = 0;
-        while (static::find()->andWhere(['slug' => $slug])->andWhere(['not', ['id' => $this->id ?? 0]])->exists()) {
-            $slug = $base . '-' . (++$n);
-        }
-        return $slug;
     }
 
     /**
