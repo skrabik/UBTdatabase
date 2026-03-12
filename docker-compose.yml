@@ -19,6 +19,24 @@ services:
     depends_on:
       - mysql
 
+  queue:
+    build: .
+    restart: unless-stopped
+    volumes:
+      - .:/var/www/html
+      - runtime_data:/var/www/html/runtime
+      - assets_data:/var/www/html/web/assets
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_DATABASE: ubtdatabase
+      MYSQL_USER: ubt
+      MYSQL_PASSWORD: secret
+      YII_ENV: dev
+      YII_DEBUG: "1"
+    depends_on:
+      - mysql
+    command: ["php", "yii", "queue/listen", "--verbose=1", "--color=0"]
+
   mysql:
     image: mysql:8.0
     environment:

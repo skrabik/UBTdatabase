@@ -35,5 +35,10 @@ mkdir -p runtime runtime/queue web/assets
 chown -R www-data:www-data runtime web/assets 2>/dev/null || true
 chmod -R 775 runtime web/assets 2>/dev/null || true
 
-# PHP-FPM в foreground
+# Если контейнеру передали команду, запускаем её вместо php-fpm
+if [ "$#" -gt 0 ]; then
+    exec "$@"
+fi
+
+# PHP-FPM в foreground по умолчанию
 exec php-fpm -F
