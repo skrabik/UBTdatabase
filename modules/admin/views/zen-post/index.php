@@ -3,7 +3,6 @@
 /** @var yii\data\ActiveDataProvider $dataProvider */
 /** @var int|null $accountId */
 
-use app\models\ZenPost;
 use app\models\ZenPostPublishAttempt;
 use yii\bootstrap5\Html;
 use yii\grid\GridView;
@@ -33,16 +32,6 @@ $this->params['breadcrumbs'][] = $this->title;
                 'contentOptions' => ['style' => 'max-width: 250px;'],
             ],
             [
-                'attribute' => 'status',
-                'format' => 'raw',
-                'value' => function ($m) {
-                    $labels = ZenPost::statusLabels();
-                    $label = $labels[$m->status] ?? $m->status;
-                    $class = $m->status === ZenPost::STATUS_POSTED ? 'success' : ($m->status === ZenPost::STATUS_PENDING ? 'warning' : 'secondary');
-                    return Html::tag('span', $label, ['class' => "badge bg-{$class}"]);
-                },
-            ],
-            [
                 'label' => 'Удалённая публикация',
                 'format' => 'raw',
                 'value' => function ($m) {
@@ -68,7 +57,7 @@ $this->params['breadcrumbs'][] = $this->title;
             ],
             [
                 'class' => 'yii\grid\ActionColumn',
-                'template' => '{update} {send} {set-posted} {set-pending}',
+                'template' => '{update} {send}',
                 'buttons' => [
                     'send' => function ($url, $model) {
                         $label = $model->latestPublishAttempt === null ? 'Отправить' : 'Отправить снова';
@@ -76,14 +65,6 @@ $this->params['breadcrumbs'][] = $this->title;
                             'class' => 'btn btn-sm btn-primary',
                             'data-method' => 'post',
                         ]);
-                    },
-                    'set-posted' => function ($url, $model) {
-                        if ($model->status === ZenPost::STATUS_POSTED) return '';
-                        return Html::a('Запощено', ['/admin/zen-post/set-status', 'account_id' => $model->account_id, 'id' => $model->id, 'status' => ZenPost::STATUS_POSTED], ['class' => 'btn btn-sm btn-success', 'data-method' => 'post']);
-                    },
-                    'set-pending' => function ($url, $model) {
-                        if ($model->status === ZenPost::STATUS_PENDING) return '';
-                        return Html::a('В очередь', ['/admin/zen-post/set-status', 'account_id' => $model->account_id, 'id' => $model->id, 'status' => ZenPost::STATUS_PENDING], ['class' => 'btn btn-sm btn-warning', 'data-method' => 'post']);
                     },
                 ],
                 'urlCreator' => function ($action, $model) {

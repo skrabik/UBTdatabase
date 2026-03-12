@@ -20,7 +20,6 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <?= $form->field($model, 'title')->textInput(['maxlength' => true]) ?>
     <?= $form->field($model, 'content')->textarea(['rows' => 6]) ?>
-    <?= $form->field($model, 'status')->dropDownList(\app\models\ZenPost::statusLabels()) ?>
 
     <div class="form-group">
         <?= Html::submitButton('Сохранить', ['class' => 'btn btn-primary']) ?>
