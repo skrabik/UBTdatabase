@@ -57,7 +57,7 @@ $this->params['breadcrumbs'][] = $this->title;
             ],
             [
                 'class' => 'yii\grid\ActionColumn',
-                'template' => '{update} {send}',
+                'template' => '{update}',
                 'buttons' => [
                     'send' => function ($url, $model) {
                         $label = $model->latestPublishAttempt === null ? 'Отправить' : 'Отправить снова';
