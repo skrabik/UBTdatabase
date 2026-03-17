@@ -7,6 +7,16 @@ use yii\grid\GridView;
 
 $this->title = 'Аккаунты Яндекс.Дзен';
 $this->params['breadcrumbs'][] = $this->title;
+
+$this->registerCss(<<<CSS
+.zen-account-index .table > tbody > tr > td {
+    transition: background-color 0.12s linear;
+}
+
+.zen-account-index .table > tbody > tr:hover > td {
+    background-color: #e1efff;
+}
+CSS);
 ?>
 <div class="zen-account-index">
     <h1><?= Html::encode($this->title) ?></h1>
@@ -17,6 +27,12 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
+        'rowOptions' => function ($model) {
+            return [
+                'class' => 'js-zen-account-row',
+                'data-id' => $model->id,
+            ];
+        },
         'columns' => [
             'id',
             'name',

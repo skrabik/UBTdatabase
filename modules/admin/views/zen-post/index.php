@@ -3,7 +3,6 @@
 /** @var yii\data\ActiveDataProvider $dataProvider */
 /** @var int|null $accountId */
 
-use app\models\ZenPostPublishAttempt;
 use yii\bootstrap5\Html;
 use yii\grid\GridView;
 use yii\helpers\Url;
@@ -17,9 +16,33 @@ if ($accountId) {
 $this->params['breadcrumbs'][] = $this->title;
 
 $this->registerCss(<<<CSS
+.zen-post-index .table > tbody > tr > td {
+    transition: background-color 0.12s linear;
+}
+
+.zen-post-index .table > tbody > tr:hover > td {
+    background-color: #e1efff;
+}
+
 .zen-post-scenario-cell {
     position: relative;
     padding-right: 34px;
+}
+
+.zen-post-title-cell {
+    display: block;
+    max-width: 250px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.zen-post-content-cell {
+    display: block;
+    max-width: 360px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .zen-post-scenario-copy {
@@ -132,8 +155,14 @@ $this->registerJs(<<<JS
         fallbackCopy(text);
         showCopiedState();
     });
+
 })();
 JS);
+
+$copyIcon = '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">'
+    . '<path d="M10 1.5H4A1.5 1.5 0 0 0 2.5 3v8A1.5 1.5 0 0 0 4 12.5h6A1.5 1.5 0 0 0 11.5 11V3A1.5 1.5 0 0 0 10 1.5Zm.5 9.5a.5.5 0 0 1-.5.5H4a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v8Z"/>'
+    . '<path d="M12 4.5a.5.5 0 0 1 .5.5V12A2.5 2.5 0 0 1 10 14.5H5a.5.5 0 0 1 0-1h5A1.5 1.5 0 0 0 11.5 12V5a.5.5 0 0 1 .5-.5Z"/>'
+    . '</svg>';
 ?>
 <div class="zen-post-index">
     <h1><?= Html::encode($this->title) ?></h1>
@@ -145,24 +174,45 @@ JS);
 
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
+        'rowOptions' => function ($model) {
+            return [
+                'class' => 'js-zen-post-row',
+                'data-id' => $model->id,
+            ];
+        },
         'columns' => [
             'id',
             [
                 'attribute' => 'title',
+                'format' => 'raw',
+                'value' => function ($m) use ($copyIcon) {
+                    $title = (string) ($m->title ?? '');
+                    $button = Html::button($copyIcon, [
+                        'type' => 'button',
+                        'class' => 'zen-post-scenario-copy js-copy-scenario',
+                        'title' => 'Скопировать заголовок',
+                        'data-title' => 'Скопировать заголовок',
+                        'data-copy-text' => $title,
+                        'aria-label' => 'Скопировать заголовок',
+                    ]);
+
+                    return Html::tag('div', $button . Html::tag('span', Html::encode($title), [
+                        'class' => 'zen-post-title-cell',
+                        'title' => $title,
+                    ]), [
+                        'class' => 'zen-post-scenario-cell',
+                    ]);
+                },
                 'contentOptions' => ['style' => 'max-width: 250px;'],
             ],
             [
                 'attribute' => 'scenario',
                 'label' => 'Тема (сценарий)',
                 'format' => 'raw',
-                'value' => function ($m) {
+                'value' => function ($m) use ($copyIcon) {
                     $scenario = (string) ($m->scenario ?? '');
                     $text = nl2br(Html::encode($scenario));
-                    $icon = '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">'
-                        . '<path d="M10 1.5H4A1.5 1.5 0 0 0 2.5 3v8A1.5 1.5 0 0 0 4 12.5h6A1.5 1.5 0 0 0 11.5 11V3A1.5 1.5 0 0 0 10 1.5Zm.5 9.5a.5.5 0 0 1-.5.5H4a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v8Z"/>'
-                        . '<path d="M12 4.5a.5.5 0 0 1 .5.5V12A2.5 2.5 0 0 1 10 14.5H5a.5.5 0 0 1 0-1h5A1.5 1.5 0 0 0 11.5 12V5a.5.5 0 0 1 .5-.5Z"/>'
-                        . '</svg>';
-                    $button = Html::button($icon, [
+                    $button = Html::button($copyIcon, [
                         'type' => 'button',
                         'class' => 'zen-post-scenario-copy js-copy-scenario',
                         'title' => 'Скопировать текст сценария',
@@ -178,42 +228,28 @@ JS);
                 'contentOptions' => ['style' => 'white-space: pre-wrap; min-width: 320px;'],
             ],
             [
-                'label' => 'Опубликован',
+                'attribute' => 'content',
+                'label' => 'Текст',
                 'format' => 'raw',
-                'value' => function ($m) {
-                    return Html::checkbox('is_posted', $m->status === \app\models\ZenPost::STATUS_POSTED, [
-                        'class' => 'form-check-input js-post-status-toggle',
-                        'aria-label' => 'Переключить статус публикации',
-                        'data-url-posted' => Url::to(['/admin/zen-post/set-status', 'account_id' => $m->account_id, 'id' => $m->id, 'status' => \app\models\ZenPost::STATUS_POSTED]),
-                        'data-url-pending' => Url::to(['/admin/zen-post/set-status', 'account_id' => $m->account_id, 'id' => $m->id, 'status' => \app\models\ZenPost::STATUS_PENDING]),
+                'value' => function ($m) use ($copyIcon) {
+                    $content = (string) ($m->content ?? '');
+                    $button = Html::button($copyIcon, [
+                        'type' => 'button',
+                        'class' => 'zen-post-scenario-copy js-copy-scenario',
+                        'title' => 'Скопировать текст статьи',
+                        'data-title' => 'Скопировать текст статьи',
+                        'data-copy-text' => $content,
+                        'aria-label' => 'Скопировать текст статьи',
+                    ]);
+
+                    return Html::tag('div', $button . Html::tag('span', Html::encode($content), [
+                        'class' => 'zen-post-content-cell',
+                        'title' => $content,
+                    ]), [
+                        'class' => 'zen-post-scenario-cell',
                     ]);
                 },
-                'contentOptions' => ['class' => 'text-center align-middle'],
-                'headerOptions' => ['class' => 'text-center'],
-            ],
-            [
-                'label' => 'Удалённая публикация',
-                'format' => 'raw',
-                'value' => function ($m) {
-                    $attempt = $m->latestPublishAttempt;
-                    $status = $attempt?->status ?? ZenPostPublishAttempt::STATUS_NEW;
-                    $labels = ZenPostPublishAttempt::statusLabels();
-                    $label = $labels[$status] ?? $status;
-                    $classMap = [
-                        ZenPostPublishAttempt::STATUS_NEW => 'secondary',
-                        ZenPostPublishAttempt::STATUS_QUEUED => 'warning',
-                        ZenPostPublishAttempt::STATUS_RUNNING => 'info',
-                        ZenPostPublishAttempt::STATUS_SUCCESS => 'success',
-                        ZenPostPublishAttempt::STATUS_ERROR => 'danger',
-                    ];
-                    $class = $classMap[$status] ?? 'secondary';
-                    $badge = Html::tag('span', $label, ['class' => "badge bg-{$class}"]);
-                    if ($attempt === null) {
-                        return $badge;
-                    }
-                    $link = Html::a('Результат', ['/admin/zen-post/send-log', 'account_id' => $m->account_id, 'id' => $m->id], ['class' => 'ms-2']);
-                    return $badge . $link;
-                },
+                'contentOptions' => ['style' => 'max-width: 360px;'],
             ],
             [
                 'class' => 'yii\grid\ActionColumn',

@@ -2,10 +2,10 @@
 
 namespace app\modules\admin\controllers;
 
+use app\jobs\RunZenPostWorkflowJob;
 use app\models\ZenAccount;
 use app\models\ZenPost;
 use app\models\ZenPostPublishAttempt;
-use app\services\DifyWorkflowApiService;
 use Yii;
 use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
@@ -145,29 +145,20 @@ class ZenPostController extends Controller
         }
 
         try {
-            $service = DifyWorkflowApiService::forAccount($account);
-            $httpCode = $service->triggerSpecificWorkflow(
-                (string) $account->workflow_id,
-                [
-                    'scenario' => (string) $model->scenario,
-                    'post_id' => (int) $model->id,
-                    'channel_id' => (int) $account->id,
-                ],
-                'zen-post-' . $model->id,
-                [],
-                'zen-post-' . $model->id . '-' . time()
-            );
+            $jobId = Yii::$app->queue->push(new RunZenPostWorkflowJob([
+                'postId' => (int) $model->id,
+            ]));
 
-            Yii::$app->session->setFlash('success', 'Workflow запущен. HTTP ' . $httpCode . '.');
+            Yii::$app->session->setFlash('success', 'Workflow поставлен в очередь. Job ID: ' . $jobId . '.');
         } catch (\Throwable $e) {
             Yii::warning([
-                'msg' => 'Не удалось запустить workflow для поста',
+                'msg' => 'Не удалось поставить workflow в очередь для поста',
                 'post_id' => $model->id,
                 'account_id' => $account->id,
                 'error' => $e->getMessage(),
             ], __METHOD__);
 
-            Yii::$app->session->setFlash('danger', 'Не удалось запустить workflow: ' . $e->getMessage());
+            Yii::$app->session->setFlash('danger', 'Не удалось поставить workflow в очередь: ' . $e->getMessage());
         }
 
         return $this->redirect(['/admin/zen-post/index', 'account_id' => $account_id]);
