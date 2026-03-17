@@ -44,7 +44,7 @@ class ZenPostController extends Controller
         $model->account_id = $account_id;
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            Yii::$app->session->setFlash('success', 'Пост создан. Для отправки используйте кнопку "Отправить".');
+            Yii::$app->session->setFlash('success', 'Пост создан.');
             return $this->redirect(['/admin/zen-post/index', 'account_id' => $account_id]);
         }
 

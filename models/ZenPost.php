@@ -10,6 +10,7 @@ use yii\db\ActiveRecord;
  * @property int $id
  * @property int $account_id
  * @property string $title
+ * @property string|null $scenario
  * @property string|null $content
  * @property string $status
  * @property int|null $scheduled_at
@@ -55,7 +56,7 @@ class ZenPost extends ActiveRecord
             [['status'], 'in', 'range' => array_keys(self::statusLabels())],
             [['status'], 'default', 'value' => self::STATUS_PENDING],
             [['title'], 'string', 'max' => 500],
-            [['content'], 'string'],
+            [['scenario', 'content'], 'string'],
             [['account_id'], 'exist', 'targetClass' => ZenAccount::class, 'targetAttribute' => 'id'],
         ];
     }
@@ -66,6 +67,7 @@ class ZenPost extends ActiveRecord
             'id' => 'ID',
             'account_id' => 'Аккаунт',
             'title' => 'Заголовок',
+            'scenario' => 'Сценарий',
             'content' => 'Текст',
             'status' => 'Статус',
             'scheduled_at' => 'Запланировано на',
