@@ -5,6 +5,7 @@ namespace app\modules\admin\controllers;
 use app\models\ZenAccount;
 use app\models\ZenPost;
 use app\models\ZenPostPublishAttempt;
+use app\services\DifyWorkflowApiService;
 use Yii;
 use yii\data\ActiveDataProvider;
 use yii\filters\AccessControl;
@@ -118,6 +119,58 @@ class ZenPostController extends Controller
         Yii::$app->session->setFlash($flashType, $flashMessage);
 
         return $this->redirect(['/admin/zen-post/send-log', 'account_id' => $account_id, 'id' => $model->id]);
+    }
+
+    public function actionRunWorkflow(int $account_id, int $id): \yii\web\Response
+    {
+        $account = $this->findAccount($account_id);
+        $model = $this->findModel($id);
+        if ((int) $model->account_id !== (int) $account_id) {
+            throw new NotFoundHttpException('Пост не принадлежит этому аккаунту.');
+        }
+
+        if (trim((string) $account->workflow_url) === '') {
+            Yii::$app->session->setFlash('danger', 'Для аккаунта не задан Workflow URL.');
+            return $this->redirect(['/admin/zen-post/update', 'account_id' => $account_id, 'id' => $model->id]);
+        }
+
+        if (trim((string) $account->workflow_key) === '') {
+            Yii::$app->session->setFlash('danger', 'Для аккаунта не задан Workflow Key.');
+            return $this->redirect(['/admin/zen-post/update', 'account_id' => $account_id, 'id' => $model->id]);
+        }
+
+        if (trim((string) $model->scenario) === '') {
+            Yii::$app->session->setFlash('danger', 'У поста пустой scenario, запуск workflow невозможен.');
+            return $this->redirect(['/admin/zen-post/update', 'account_id' => $account_id, 'id' => $model->id]);
+        }
+
+        try {
+            $service = DifyWorkflowApiService::forAccount($account);
+            $httpCode = $service->triggerPipelineUrl(
+                (string) $account->workflow_url,
+                [
+                    'scenario' => (string) $model->scenario,
+                    'post_id' => (int) $model->id,
+                    'channel_id' => (int) $account->id,
+                ],
+                'zen-post-' . $model->id,
+                [],
+                'zen-post-' . $model->id . '-' . time()
+            );
+
+            Yii::$app->session->setFlash('success', 'Workflow запущен. HTTP ' . $httpCode . '.');
+        } catch (\Throwable $e) {
+            Yii::warning([
+                'msg' => 'Не удалось запустить workflow для поста',
+                'post_id' => $model->id,
+                'account_id' => $account->id,
+                'error' => $e->getMessage(),
+            ], __METHOD__);
+
+            Yii::$app->session->setFlash('danger', 'Не удалось запустить workflow: ' . $e->getMessage());
+        }
+
+        return $this->redirect(['/admin/zen-post/update', 'account_id' => $account_id, 'id' => $model->id]);
     }
 
     /**

@@ -78,6 +78,17 @@ class DifyWorkflowApiService extends BaseObject
         );
     }
 
+    public function triggerPipelineUrl(string $pipelineUrl, array $inputs, string $user, array $files = [], ?string $traceId = null): int
+    {
+        return $this->triggerSpecificWorkflow(
+            $this->extractWorkflowIdFromUrl($pipelineUrl),
+            $inputs,
+            $user,
+            $files,
+            $traceId
+        );
+    }
+
     /**
      * Выполняет workflow в streaming-режиме и передаёт каждый SSE event в callback.
      *
@@ -132,6 +143,16 @@ class DifyWorkflowApiService extends BaseObject
         return $this->requestJson('POST', '/workflows/tasks/' . rawurlencode($taskId) . '/stop', [
             'user' => $user,
         ]);
+    }
+
+    public function triggerSpecificWorkflow(string $workflowId, array $inputs, string $user, array $files = [], ?string $traceId = null): int
+    {
+        return $this->requestStatusCode(
+            'POST',
+            '/workflows/' . rawurlencode($workflowId) . '/run',
+            $this->buildRunPayload($inputs, $user, self::RESPONSE_MODE_BLOCKING, $files, $traceId),
+            $traceId
+        );
     }
 
     public function uploadFile(string $filePath, string $user): array
@@ -259,6 +280,42 @@ class DifyWorkflowApiService extends BaseObject
         }
 
         return $data;
+    }
+
+    protected function requestStatusCode(string $method, string $path, ?array $body = null, ?string $traceId = null, array $query = []): int
+    {
+        $this->ensureConfigured();
+
+        $headers = [
+            'Authorization: Bearer ' . $this->apiKey,
+            'Accept: application/json',
+        ];
+
+        if ($traceId !== null && $traceId !== '') {
+            $headers[] = 'X-Trace-Id: ' . $traceId;
+        }
+
+        $payload = null;
+        if ($body !== null) {
+            $payload = json_encode($body, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            if ($payload === false) {
+                throw new \RuntimeException('Не удалось сериализовать JSON-запрос для Dify API.');
+            }
+            $headers[] = 'Content-Type: application/json';
+        }
+
+        $response = $this->sendCurlRequest($method, $this->buildUrl($path, $query), $headers, $payload);
+
+        if ($response['httpCode'] >= 400) {
+            $data = json_decode($response['body'], true);
+            if (is_array($data)) {
+                throw new \RuntimeException($this->buildHttpErrorMessage($response['httpCode'], $data));
+            }
+
+            throw new \RuntimeException('Dify API вернул HTTP ' . $response['httpCode'] . ': ' . trim($response['body']));
+        }
+
+        return $response['httpCode'];
     }
 
     protected function requestMultipart(string $method, string $path, array $body): array

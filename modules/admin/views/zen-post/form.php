@@ -67,6 +67,14 @@ JS);
 
     <div class="form-group">
         <?= Html::submitButton('Сохранить', ['class' => 'btn btn-primary']) ?>
+        <?php if (!$model->isNewRecord): ?>
+            <?= Html::a('Запустить workflow', ['/admin/zen-post/run-workflow', 'account_id' => $accountId, 'id' => $model->id], [
+                'class' => 'btn btn-outline-primary',
+                'data-method' => 'post',
+                'data-confirm-title' => 'Запустить workflow',
+                'data-confirm-modal' => 'Запустить workflow для этого поста? Будут отправлены scenario, post_id и channel_id.',
+            ]) ?>
+        <?php endif; ?>
         <?= Html::a('Отмена', ['/admin/zen-post/index', 'account_id' => $accountId], ['class' => 'btn btn-secondary']) ?>
     </div>
 
