@@ -217,18 +217,19 @@ JS);
             ],
             [
                 'class' => 'yii\grid\ActionColumn',
-                'template' => '{update}',
+                'template' => '{run-workflow} {update}',
                 'buttons' => [
-                    'send' => function ($url, $model) {
-                        $label = $model->latestPublishAttempt === null ? 'Отправить' : 'Отправить снова';
-                        return Html::a($label, ['/admin/zen-post/send', 'account_id' => $model->account_id, 'id' => $model->id], [
-                            'class' => 'btn btn-sm btn-primary',
+                    'run-workflow' => function ($url, $model) {
+                        return Html::a('Запустить workflow', ['/admin/zen-post/run-workflow', 'account_id' => $model->account_id, 'id' => $model->id], [
+                            'class' => 'btn btn-sm btn-outline-primary me-1',
                             'data-method' => 'post',
+                            'data-confirm-title' => 'Запустить workflow',
+                            'data-confirm-modal' => 'Запустить workflow для этого поста? Будут отправлены scenario, post_id и channel_id.',
                         ]);
                     },
                 ],
                 'urlCreator' => function ($action, $model) {
-                    if ($action === 'update') {
+                    if ($action === 'update' || $action === 'run-workflow') {
                         return ['/admin/zen-post/' . $action, 'account_id' => $model->account_id, 'id' => $model->id];
                     }
                     return '#';

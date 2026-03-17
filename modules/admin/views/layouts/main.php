@@ -225,6 +225,7 @@ $this->registerJs(<<<JS
                 form.appendChild(input);
             }
             document.body.appendChild(form);
+            modal.hide();
             form.submit();
             return;
         }

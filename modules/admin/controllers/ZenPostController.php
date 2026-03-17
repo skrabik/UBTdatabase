@@ -131,17 +131,17 @@ class ZenPostController extends Controller
 
         if (trim((string) $account->workflow_id) === '') {
             Yii::$app->session->setFlash('danger', 'Для аккаунта не задан Workflow ID.');
-            return $this->redirect(['/admin/zen-post/update', 'account_id' => $account_id, 'id' => $model->id]);
+            return $this->redirect(['/admin/zen-post/index', 'account_id' => $account_id]);
         }
 
         if (trim((string) $account->workflow_key) === '') {
             Yii::$app->session->setFlash('danger', 'Для аккаунта не задан Workflow Key.');
-            return $this->redirect(['/admin/zen-post/update', 'account_id' => $account_id, 'id' => $model->id]);
+            return $this->redirect(['/admin/zen-post/index', 'account_id' => $account_id]);
         }
 
         if (trim((string) $model->scenario) === '') {
             Yii::$app->session->setFlash('danger', 'У поста пустой scenario, запуск workflow невозможен.');
-            return $this->redirect(['/admin/zen-post/update', 'account_id' => $account_id, 'id' => $model->id]);
+            return $this->redirect(['/admin/zen-post/index', 'account_id' => $account_id]);
         }
 
         try {
@@ -170,7 +170,7 @@ class ZenPostController extends Controller
             Yii::$app->session->setFlash('danger', 'Не удалось запустить workflow: ' . $e->getMessage());
         }
 
-        return $this->redirect(['/admin/zen-post/update', 'account_id' => $account_id, 'id' => $model->id]);
+        return $this->redirect(['/admin/zen-post/index', 'account_id' => $account_id]);
     }
 
     /**
