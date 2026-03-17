@@ -74,7 +74,7 @@ class SendZenPostJob extends BaseObject implements JobInterface
             'account-slug' => $account->slug,
             'login' => $account->login ?? '',
             'password' => $account->password ?? '',
-            'article_title' => $post->title,
+            'article_title' => (string) $post->title,
             'article_text' => (string) $post->content,
             'headless' => (bool) (Yii::$app->params['postArticleHeadless'] ?? false),
         ];

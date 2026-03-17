@@ -140,7 +140,9 @@ class ChannelController extends Controller
 
         $model = new ZenPost();
         $model->account_id = $channel->id;
-        $model->title = $body['title'] ?? '';
+        $model->title = array_key_exists('title', $body)
+            ? ($body['title'] === null ? null : (string) $body['title'])
+            : null;
         $model->content = isset($body['content']) ? (string) $body['content'] : null;
         $model->status = $body['status'] ?? ZenPost::STATUS_PENDING;
         $model->scheduled_at = isset($body['scheduled_at']) ? (int) $body['scheduled_at'] : null;
@@ -174,8 +176,8 @@ class ChannelController extends Controller
             throw new NotFoundHttpException('Пост не найден в этом канале.');
         }
         $body = Yii::$app->request->getBodyParams();
-        if (isset($body['title'])) {
-            $post->title = $body['title'];
+        if (array_key_exists('title', $body)) {
+            $post->title = $body['title'] === null ? null : (string) $body['title'];
         }
         if (array_key_exists('content', $body)) {
             $post->content = $body['content'] === null ? null : (string) $body['content'];

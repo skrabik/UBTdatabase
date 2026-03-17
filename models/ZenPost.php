@@ -9,7 +9,7 @@ use yii\db\ActiveRecord;
 /**
  * @property int $id
  * @property int $account_id
- * @property string $title
+ * @property string|null $title
  * @property string|null $scenario
  * @property string|null $dify_pipeline_url
  * @property string|null $content
@@ -52,7 +52,7 @@ class ZenPost extends ActiveRecord
     public function rules(): array
     {
         return [
-            [['account_id', 'title'], 'required'],
+            [['account_id'], 'required'],
             [['account_id', 'scheduled_at', 'posted_at', 'created_at', 'updated_at', 'deleted_at'], 'integer'],
             [['status'], 'in', 'range' => array_keys(self::statusLabels())],
             [['status'], 'default', 'value' => self::STATUS_PENDING],
