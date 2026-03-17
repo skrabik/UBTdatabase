@@ -129,8 +129,8 @@ class ZenPostController extends Controller
             throw new NotFoundHttpException('Пост не принадлежит этому аккаунту.');
         }
 
-        if (trim((string) $account->workflow_url) === '') {
-            Yii::$app->session->setFlash('danger', 'Для аккаунта не задан Workflow URL.');
+        if (trim((string) $account->workflow_id) === '') {
+            Yii::$app->session->setFlash('danger', 'Для аккаунта не задан Workflow ID.');
             return $this->redirect(['/admin/zen-post/update', 'account_id' => $account_id, 'id' => $model->id]);
         }
 
@@ -146,8 +146,8 @@ class ZenPostController extends Controller
 
         try {
             $service = DifyWorkflowApiService::forAccount($account);
-            $httpCode = $service->triggerPipelineUrl(
-                (string) $account->workflow_url,
+            $httpCode = $service->triggerSpecificWorkflow(
+                (string) $account->workflow_id,
                 [
                     'scenario' => (string) $model->scenario,
                     'post_id' => (int) $model->id,

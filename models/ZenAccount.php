@@ -16,7 +16,7 @@ use yii\helpers\Inflector;
  * @property string|null $login
  * @property string|null $password
  * @property string|null $proxy_ip
- * @property string|null $workflow_url
+ * @property string|null $workflow_id
  * @property string|null $workflow_key
  * @property int|null $created_at
  * @property int|null $updated_at
@@ -62,7 +62,7 @@ class ZenAccount extends ActiveRecord
             [['themeIds'], 'each', 'rule' => ['exist', 'targetClass' => Theme::class, 'targetAttribute' => 'id']],
             [['login', 'password'], 'string', 'max' => 2048],
             [['proxy_ip'], 'string', 'max' => 255],
-            [['workflow_url', 'workflow_key'], 'string', 'max' => 2048],
+            [['workflow_id', 'workflow_key'], 'string', 'max' => 2048],
             [['description'], 'string'],
             [['created_at', 'updated_at', 'deleted_at'], 'integer'],
         ];
@@ -71,7 +71,7 @@ class ZenAccount extends ActiveRecord
     public function scenarios(): array
     {
         $scenarios = parent::scenarios();
-        $attributes = ['name', 'slug', 'description', 'url', 'theme', 'themeIds', 'login', 'password', 'proxy_ip', 'workflow_url', 'workflow_key'];
+        $attributes = ['name', 'slug', 'description', 'url', 'theme', 'themeIds', 'login', 'password', 'proxy_ip', 'workflow_id', 'workflow_key'];
         $scenarios[self::SCENARIO_CREATE] = $attributes;
         $scenarios[self::SCENARIO_UPDATE] = $attributes;
 
@@ -91,7 +91,7 @@ class ZenAccount extends ActiveRecord
             'login' => 'Логин (Почта)',
             'password' => 'Пароль',
             'proxy_ip' => 'Прокси IP',
-            'workflow_url' => 'Workflow URL',
+            'workflow_id' => 'Workflow ID',
             'workflow_key' => 'Workflow Key',
             'created_at' => 'Создан',
             'updated_at' => 'Обновлён',
