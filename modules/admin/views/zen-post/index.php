@@ -16,6 +16,43 @@ if ($accountId) {
 }
 $this->params['breadcrumbs'][] = $this->title;
 
+$this->registerCss(<<<CSS
+.zen-post-scenario-cell {
+    position: relative;
+    padding-right: 34px;
+}
+
+.zen-post-scenario-copy {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: 0;
+    background: transparent;
+    color: #6c757d;
+    line-height: 1;
+    padding: 0;
+    cursor: pointer;
+}
+
+.zen-post-scenario-copy svg {
+    width: 18px;
+    height: 18px;
+}
+
+.zen-post-scenario-copy:hover {
+    color: #0d6efd;
+}
+
+.zen-post-scenario-copy.is-copied {
+    color: #198754;
+}
+CSS);
+
 $this->registerJs(<<<JS
 (function () {
     document.body.addEventListener('change', function (event) {
@@ -43,6 +80,58 @@ $this->registerJs(<<<JS
         document.body.appendChild(form);
         form.submit();
     });
+
+    document.body.addEventListener('click', function (event) {
+        var button = event.target.closest('.js-copy-scenario');
+        var textarea;
+
+        if (!button) {
+            return;
+        }
+
+        event.preventDefault();
+
+        function showCopiedState() {
+            var initialTitle = button.getAttribute('data-title') || button.getAttribute('title') || '';
+            button.classList.add('is-copied');
+            button.disabled = true;
+            setTimeout(function () {
+                button.classList.remove('is-copied');
+                button.disabled = false;
+                if (initialTitle) {
+                    button.setAttribute('title', initialTitle);
+                }
+            }, 1200);
+        }
+
+        function fallbackCopy(text) {
+            textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.setAttribute('readonly', '');
+            textarea.style.position = 'absolute';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+        }
+
+        var text = button.dataset.copyText || '';
+        if (!text) {
+            return;
+        }
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(showCopiedState).catch(function () {
+                fallbackCopy(text);
+                showCopiedState();
+            });
+            return;
+        }
+
+        fallbackCopy(text);
+        showCopiedState();
+    });
 })();
 JS);
 ?>
@@ -65,7 +154,27 @@ JS);
             [
                 'attribute' => 'scenario',
                 'label' => 'Тема (сценарий)',
-                'format' => 'ntext',
+                'format' => 'raw',
+                'value' => function ($m) {
+                    $scenario = (string) ($m->scenario ?? '');
+                    $text = nl2br(Html::encode($scenario));
+                    $icon = '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">'
+                        . '<path d="M10 1.5H4A1.5 1.5 0 0 0 2.5 3v8A1.5 1.5 0 0 0 4 12.5h6A1.5 1.5 0 0 0 11.5 11V3A1.5 1.5 0 0 0 10 1.5Zm.5 9.5a.5.5 0 0 1-.5.5H4a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v8Z"/>'
+                        . '<path d="M12 4.5a.5.5 0 0 1 .5.5V12A2.5 2.5 0 0 1 10 14.5H5a.5.5 0 0 1 0-1h5A1.5 1.5 0 0 0 11.5 12V5a.5.5 0 0 1 .5-.5Z"/>'
+                        . '</svg>';
+                    $button = Html::button($icon, [
+                        'type' => 'button',
+                        'class' => 'zen-post-scenario-copy js-copy-scenario',
+                        'title' => 'Скопировать текст сценария',
+                        'data-title' => 'Скопировать текст сценария',
+                        'data-copy-text' => $scenario,
+                        'aria-label' => 'Скопировать текст сценария',
+                    ]);
+
+                    return Html::tag('div', $button . $text, [
+                        'class' => 'zen-post-scenario-cell',
+                    ]);
+                },
                 'contentOptions' => ['style' => 'white-space: pre-wrap; min-width: 320px;'],
             ],
             [

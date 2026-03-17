@@ -100,6 +100,11 @@ class ZenPost extends ActiveRecord
             if ($insert) {
                 $this->created_at = time();
             }
+            if ($this->status === self::STATUS_POSTED) {
+                $this->posted_at = $this->posted_at ?: time();
+            } else {
+                $this->posted_at = null;
+            }
             return true;
         }
         return false;
