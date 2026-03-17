@@ -45,6 +45,12 @@ $this->params['breadcrumbs'][] = $this->title;
                 'value' => fn ($m) => $m->proxy_ip ?: '—',
             ],
             [
+                'attribute' => 'workflow_url',
+                'format' => 'raw',
+                'value' => fn ($m) => $m->workflow_url ? Html::a($m->workflow_url, $m->workflow_url, ['target' => '_blank', 'rel' => 'noopener noreferrer', 'title' => $m->workflow_url]) : '—',
+                'contentOptions' => ['style' => 'max-width: 220px; overflow: hidden; text-overflow: ellipsis;'],
+            ],
+            [
                 'attribute' => 'created_at',
                 'format' => ['date', 'php:d.m.Y H:i'],
             ],

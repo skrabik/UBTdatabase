@@ -28,6 +28,10 @@ $this->params['breadcrumbs'][] = $this->title;
     <?= $form->field($model, 'login')->textInput(['maxlength' => 2048]) ?>
     <?= $form->field($model, 'password')->textInput(['maxlength' => 2048]) ?>
     <?= $form->field($model, 'proxy_ip')->textInput(['maxlength' => 255])->hint('Например: 1.2.3.4 или 1.2.3.4:8080') ?>
+    <?= $form->field($model, 'workflow_url')->textInput(['maxlength' => 2048])->hint('URL workflow или pipeline для этого аккаунта.') ?>
+    <?php if (!$model->isNewRecord): ?>
+        <?= $form->field($model, 'workflow_key')->passwordInput(['maxlength' => 2048])->hint('Отдельный API ключ для workflow этого аккаунта.') ?>
+    <?php endif; ?>
 
     <div class="form-group">
         <?= Html::submitButton('Сохранить', ['class' => 'btn btn-primary']) ?>
