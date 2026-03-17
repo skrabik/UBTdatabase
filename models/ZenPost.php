@@ -11,6 +11,7 @@ use yii\db\ActiveRecord;
  * @property int $account_id
  * @property string $title
  * @property string|null $scenario
+ * @property string|null $dify_pipeline_url
  * @property string|null $content
  * @property string $status
  * @property int|null $scheduled_at
@@ -57,6 +58,7 @@ class ZenPost extends ActiveRecord
             [['status'], 'default', 'value' => self::STATUS_PENDING],
             [['title'], 'string', 'max' => 500],
             [['scenario', 'content'], 'string'],
+            [['dify_pipeline_url'], 'string', 'max' => 2048],
             [['account_id'], 'exist', 'targetClass' => ZenAccount::class, 'targetAttribute' => 'id'],
         ];
     }
@@ -68,6 +70,7 @@ class ZenPost extends ActiveRecord
             'account_id' => 'Аккаунт',
             'title' => 'Заголовок',
             'scenario' => 'Тема (сценарий)',
+            'dify_pipeline_url' => 'URL Dify pipeline',
             'content' => 'Текст',
             'status' => 'Статус',
             'scheduled_at' => 'Запланировано на',
