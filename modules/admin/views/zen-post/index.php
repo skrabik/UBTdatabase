@@ -5,6 +5,7 @@
 
 use yii\bootstrap5\Html;
 use yii\grid\GridView;
+use yii\helpers\HtmlPurifier;
 use yii\helpers\Url;
 
 $this->title = $accountId ? 'Посты аккаунта' : 'Все посты';
@@ -38,8 +39,7 @@ $this->registerCss(<<<CSS
     padding-right: 34px;
 }
 
-.zen-post-title-cell,
-.zen-post-content-cell {
+.zen-post-title-cell {
     display: -webkit-box;
     max-width: 250px;
     overflow: hidden;
@@ -52,7 +52,34 @@ $this->registerCss(<<<CSS
 
 .zen-post-content-cell {
     max-width: 360px;
-    white-space: pre-wrap;
+    overflow: hidden;
+    line-height: 1.35;
+    max-height: calc(var(--zen-line-clamp, 2) * 1.35em);
+    word-break: break-word;
+}
+
+.zen-post-content-cell > *:first-child {
+    margin-top: 0;
+}
+
+.zen-post-content-cell > *:last-child {
+    margin-bottom: 0;
+}
+
+.zen-post-content-cell p,
+.zen-post-content-cell ul,
+.zen-post-content-cell ol,
+.zen-post-content-cell blockquote {
+    margin-bottom: 0.5em;
+}
+
+.zen-post-content-cell ul,
+.zen-post-content-cell ol {
+    padding-left: 1.25rem;
+}
+
+.zen-post-content-cell strong {
+    font-weight: 700;
 }
 
 .zen-post-scenario-copy {
@@ -275,18 +302,20 @@ $copyIcon = '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">'
                 'format' => 'raw',
                 'value' => function ($m) use ($copyIcon) {
                     $content = (string) ($m->content ?? '');
+                    $plainContent = trim(html_entity_decode(strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $content))));
+                    $renderedContent = $content === '' ? '' : HtmlPurifier::process($content);
                     $button = Html::button($copyIcon, [
                         'type' => 'button',
                         'class' => 'zen-post-scenario-copy js-copy-scenario',
                         'title' => 'Скопировать текст статьи',
                         'data-title' => 'Скопировать текст статьи',
-                        'data-copy-text' => $content,
+                        'data-copy-text' => $plainContent,
                         'aria-label' => 'Скопировать текст статьи',
                     ]);
 
-                    return Html::tag('div', $button . Html::tag('span', Html::encode($content), [
+                    return Html::tag('div', $button . Html::tag('div', $renderedContent, [
                         'class' => 'zen-post-content-cell zen-post-clamp-text',
-                        'title' => $content,
+                        'title' => $plainContent,
                     ]), [
                         'class' => 'zen-post-clamp-cell',
                     ]);
