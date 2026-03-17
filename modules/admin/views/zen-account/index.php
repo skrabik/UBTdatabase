@@ -16,6 +16,10 @@ $this->registerCss(<<<CSS
 .zen-account-index .table > tbody > tr:hover > td {
     background-color: #e1efff;
 }
+
+.zen-account-index .table > tbody > tr:hover > td:hover {
+    background-color: #cfe4ff;
+}
 CSS);
 ?>
 <div class="zen-account-index">

@@ -24,25 +24,35 @@ $this->registerCss(<<<CSS
     background-color: #e1efff;
 }
 
+.zen-post-index .table > tbody > tr:hover > td:hover {
+    background-color: #cfe4ff;
+}
+
 .zen-post-scenario-cell {
     position: relative;
     padding-right: 34px;
 }
 
-.zen-post-title-cell {
-    display: block;
+.zen-post-clamp-cell {
+    position: relative;
+    padding-right: 34px;
+}
+
+.zen-post-title-cell,
+.zen-post-content-cell {
+    display: -webkit-box;
     max-width: 250px;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: var(--zen-line-clamp, 2);
+    line-height: 1.35;
+    max-height: calc(var(--zen-line-clamp, 2) * 1.35em);
+    word-break: break-word;
 }
 
 .zen-post-content-cell {
-    display: block;
     max-width: 360px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: pre-wrap;
 }
 
 .zen-post-scenario-copy {
@@ -78,6 +88,34 @@ CSS);
 
 $this->registerJs(<<<JS
 (function () {
+    function syncClampedCells() {
+        document.querySelectorAll('tr.js-zen-post-row').forEach(function (row) {
+            var scenarioCell = row.querySelector('.zen-post-cell-scenario .zen-post-scenario-cell');
+            if (!scenarioCell) {
+                return;
+            }
+
+            var availableHeight = scenarioCell.getBoundingClientRect().height;
+            if (!availableHeight) {
+                return;
+            }
+
+            row.querySelectorAll('.zen-post-clamp-text').forEach(function (textNode) {
+                textNode.style.removeProperty('--zen-line-clamp');
+                textNode.style.removeProperty('max-height');
+
+                var lineHeight = parseFloat(window.getComputedStyle(textNode).lineHeight);
+                if (!lineHeight || !isFinite(lineHeight)) {
+                    lineHeight = 19;
+                }
+
+                var lines = Math.max(1, Math.floor(availableHeight / lineHeight));
+                textNode.style.setProperty('--zen-line-clamp', String(lines));
+                textNode.style.maxHeight = (lines * lineHeight) + 'px';
+            });
+        });
+    }
+
     document.body.addEventListener('change', function (event) {
         var checkbox = event.target.closest('.js-post-status-toggle');
         if (!checkbox) {
@@ -156,6 +194,10 @@ $this->registerJs(<<<JS
         showCopiedState();
     });
 
+    syncClampedCells();
+    window.addEventListener('load', syncClampedCells);
+    window.addEventListener('resize', syncClampedCells);
+
 })();
 JS);
 
@@ -197,13 +239,13 @@ $copyIcon = '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">'
                     ]);
 
                     return Html::tag('div', $button . Html::tag('span', Html::encode($title), [
-                        'class' => 'zen-post-title-cell',
+                        'class' => 'zen-post-title-cell zen-post-clamp-text',
                         'title' => $title,
                     ]), [
-                        'class' => 'zen-post-scenario-cell',
+                        'class' => 'zen-post-clamp-cell',
                     ]);
                 },
-                'contentOptions' => ['style' => 'max-width: 250px;'],
+                'contentOptions' => ['class' => 'zen-post-cell-title', 'style' => 'max-width: 250px;'],
             ],
             [
                 'attribute' => 'scenario',
@@ -225,7 +267,7 @@ $copyIcon = '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">'
                         'class' => 'zen-post-scenario-cell',
                     ]);
                 },
-                'contentOptions' => ['style' => 'white-space: pre-wrap; min-width: 320px;'],
+                'contentOptions' => ['class' => 'zen-post-cell-scenario', 'style' => 'white-space: pre-wrap; min-width: 320px;'],
             ],
             [
                 'attribute' => 'content',
@@ -243,13 +285,13 @@ $copyIcon = '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">'
                     ]);
 
                     return Html::tag('div', $button . Html::tag('span', Html::encode($content), [
-                        'class' => 'zen-post-content-cell',
+                        'class' => 'zen-post-content-cell zen-post-clamp-text',
                         'title' => $content,
                     ]), [
-                        'class' => 'zen-post-scenario-cell',
+                        'class' => 'zen-post-clamp-cell',
                     ]);
                 },
-                'contentOptions' => ['style' => 'max-width: 360px;'],
+                'contentOptions' => ['class' => 'zen-post-cell-content', 'style' => 'max-width: 360px;'],
             ],
             [
                 'class' => 'yii\grid\ActionColumn',
