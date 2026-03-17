@@ -63,6 +63,12 @@ JS);
                 'contentOptions' => ['style' => 'max-width: 250px;'],
             ],
             [
+                'attribute' => 'scenario',
+                'label' => 'Тема (сценарий)',
+                'format' => 'ntext',
+                'contentOptions' => ['style' => 'white-space: pre-wrap; min-width: 320px;'],
+            ],
+            [
                 'label' => 'Опубликован',
                 'format' => 'raw',
                 'value' => function ($m) {
