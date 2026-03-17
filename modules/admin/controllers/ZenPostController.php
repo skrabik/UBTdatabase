@@ -89,7 +89,9 @@ class ZenPostController extends Controller
         if (in_array($status, [ZenPost::STATUS_DRAFT, ZenPost::STATUS_PENDING, ZenPost::STATUS_POSTED], true)) {
             $model->status = $status;
             if ($status === ZenPost::STATUS_POSTED) {
-                $model->posted_at = time();
+                $model->posted_at = $model->posted_at ?: time();
+            } else {
+                $model->posted_at = null;
             }
             $model->save(false);
             Yii::$app->session->setFlash('success', 'Статус обновлён.');

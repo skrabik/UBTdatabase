@@ -6,6 +6,7 @@
 use app\models\ZenPostPublishAttempt;
 use yii\bootstrap5\Html;
 use yii\grid\GridView;
+use yii\helpers\Url;
 
 $this->title = $accountId ? 'Посты аккаунта' : 'Все посты';
 $this->params['breadcrumbs'][] = ['label' => 'Аккаунты Яндекс.Дзен', 'url' => ['/admin/zen-account/index']];
@@ -14,6 +15,36 @@ if ($accountId) {
     $this->params['breadcrumbs'][] = $account ? $account->name : (string) $accountId;
 }
 $this->params['breadcrumbs'][] = $this->title;
+
+$this->registerJs(<<<JS
+(function () {
+    document.body.addEventListener('change', function (event) {
+        var checkbox = event.target.closest('.js-post-status-toggle');
+        if (!checkbox) {
+            return;
+        }
+
+        var form = document.createElement('form');
+        var csrfParam = document.querySelector('meta[name="csrf-param"]');
+        var csrfToken = document.querySelector('meta[name="csrf-token"]');
+
+        form.method = 'post';
+        form.action = checkbox.checked ? checkbox.dataset.urlPosted : checkbox.dataset.urlPending;
+        form.style.display = 'none';
+
+        if (csrfParam && csrfToken) {
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = csrfParam.getAttribute('content');
+            input.value = csrfToken.getAttribute('content');
+            form.appendChild(input);
+        }
+
+        document.body.appendChild(form);
+        form.submit();
+    });
+})();
+JS);
 ?>
 <div class="zen-post-index">
     <h1><?= Html::encode($this->title) ?></h1>
@@ -30,6 +61,20 @@ $this->params['breadcrumbs'][] = $this->title;
             [
                 'attribute' => 'title',
                 'contentOptions' => ['style' => 'max-width: 250px;'],
+            ],
+            [
+                'label' => 'Опубликован',
+                'format' => 'raw',
+                'value' => function ($m) {
+                    return Html::checkbox('is_posted', $m->status === \app\models\ZenPost::STATUS_POSTED, [
+                        'class' => 'form-check-input js-post-status-toggle',
+                        'aria-label' => 'Переключить статус публикации',
+                        'data-url-posted' => Url::to(['/admin/zen-post/set-status', 'account_id' => $m->account_id, 'id' => $m->id, 'status' => \app\models\ZenPost::STATUS_POSTED]),
+                        'data-url-pending' => Url::to(['/admin/zen-post/set-status', 'account_id' => $m->account_id, 'id' => $m->id, 'status' => \app\models\ZenPost::STATUS_PENDING]),
+                    ]);
+                },
+                'contentOptions' => ['class' => 'text-center align-middle'],
+                'headerOptions' => ['class' => 'text-center'],
             ],
             [
                 'label' => 'Удалённая публикация',

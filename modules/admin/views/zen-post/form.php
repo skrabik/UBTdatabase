@@ -14,12 +14,12 @@ $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="zen-post-form">
     <h1><?= Html::encode($this->title) ?></h1>
-    <p class="text-muted">Сценарий задаёт основу и смысл будущего поста, а в тексте можно сохранить уже готовый вариант публикации.</p>
+    <p class="text-muted">Тема (сценарий) задаёт основу и смысл будущего поста, а в тексте можно сохранить уже готовый вариант публикации.</p>
 
     <?php $form = ActiveForm::begin(); ?>
 
-    <?= $form->field($model, 'title')->textInput(['maxlength' => true]) ?>
     <?= $form->field($model, 'scenario')->textarea(['rows' => 4]) ?>
+    <?= $form->field($model, 'title')->textInput(['maxlength' => true]) ?>
     <?= $form->field($model, 'content')->textarea(['rows' => 6]) ?>
 
     <div class="form-group">

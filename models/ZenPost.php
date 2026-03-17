@@ -67,7 +67,7 @@ class ZenPost extends ActiveRecord
             'id' => 'ID',
             'account_id' => 'Аккаунт',
             'title' => 'Заголовок',
-            'scenario' => 'Сценарий',
+            'scenario' => 'Тема (сценарий)',
             'content' => 'Текст',
             'status' => 'Статус',
             'scheduled_at' => 'Запланировано на',
