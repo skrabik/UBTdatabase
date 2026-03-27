@@ -13,24 +13,28 @@ AppAsset::register($this);
 $this->registerCsrfMetaTags();
 $this->registerMetaTag(['charset' => Yii::$app->charset], 'charset');
 $this->registerMetaTag(['name' => 'viewport', 'content' => 'width=device-width, initial-scale=1']);
+$this->registerJs(<<<JS
+(function() {
+    var storageKey = 'admin-theme';
+    var theme = 'dark';
+    try {
+        var savedTheme = window.localStorage.getItem(storageKey);
+        if (savedTheme === 'light' || savedTheme === 'dark') {
+            theme = savedTheme;
+        }
+    } catch (e) {}
+    document.documentElement.setAttribute('data-admin-theme', theme);
+})();
+JS, \yii\web\View::POS_HEAD, 'admin-theme-init');
 $this->registerCss(<<<CSS
-.navbar .navbar-nav .nav-link:hover,
-.navbar .navbar-nav .nav-link:focus,
-.navbar .navbar-nav .nav-item .btn-link.nav-link:hover,
-.navbar .navbar-nav .nav-item .btn-link.nav-link:focus {
-    background-color: rgba(255, 255, 255, 0.15);
-    border-radius: 0.25rem;
-}
 #logoutModal .modal-dialog,
 #confirmModal .modal-dialog { margin: 1.75rem auto; }
-#logoutModal .modal-content,
-#confirmModal .modal-content { border: none; border-radius: 0.5rem; box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.2); }
 #logoutModal .modal-header,
-#confirmModal .modal-header { border-bottom: 1px solid #dee2e6; padding: 1rem 1.25rem; }
+#confirmModal .modal-header { padding: 1rem 1.25rem; }
 #logoutModal .modal-body,
 #confirmModal .modal-body { padding: 1.25rem; font-size: 1rem; }
 #logoutModal .modal-footer,
-#confirmModal .modal-footer { border-top: 1px solid #dee2e6; padding: 1rem 1.25rem; gap: 0.5rem; }
+#confirmModal .modal-footer { padding: 1rem 1.25rem; gap: 0.5rem; }
 CSS
 );
 ?>
@@ -41,13 +45,13 @@ CSS
     <title><?= Html::encode($this->title) ?> — Админка</title>
     <?php $this->head() ?>
 </head>
-<body class="admin-dark">
+<body class="admin-theme">
 <?php $this->beginBody() ?>
 <?php
 NavBar::begin([
     'brandLabel' => 'Панель управления',
     'brandUrl' => ['/admin/default/index'],
-    'options' => ['class' => 'navbar-expand-md navbar-dark bg-dark'],
+    'options' => ['class' => 'navbar-expand-md navbar-dark admin-navbar'],
 ]);
 echo Nav::widget([
     'options' => ['class' => 'navbar-nav me-auto'],
@@ -55,6 +59,13 @@ echo Nav::widget([
         ['label' => 'Аккаунты Дзен', 'url' => ['/admin/zen-account/index']],
         ['label' => 'Тематики каналов', 'url' => ['/admin/theme/index']],
         ['label' => 'Пользователи и роли', 'url' => ['/admin/user/index']],
+        '<li class="nav-item d-flex align-items-center me-2">'
+            . Html::button('', [
+                'class' => 'btn btn-sm admin-theme-toggle js-admin-theme-toggle',
+                'type' => 'button',
+                'aria-live' => 'polite',
+            ])
+            . '</li>',
         '<li class="nav-item">'
             . Html::beginForm(['/admin/logout'], 'post', ['class' => 'd-flex', 'id' => 'logout-form'])
             . Html::button('Выход (' . Html::encode(Yii::$app->user->identity->username) . ')', [
@@ -148,12 +159,43 @@ echo Html::endTag('div');
 
 $this->registerJs(<<<JS
 (function() {
+    var storageKey = 'admin-theme';
     var logoutConfirmBtn = document.getElementById('logout-confirm-btn');
     var logoutForm = document.getElementById('logout-form');
     var confirmModal = document.getElementById('confirmModal');
     var confirmTitle = document.getElementById('confirmModalLabel');
     var confirmBody = document.getElementById('confirmModalBody');
     var confirmSubmit = document.getElementById('confirm-modal-submit');
+    var themeToggleButtons = document.querySelectorAll('.js-admin-theme-toggle');
+
+    function getTheme() {
+        return document.documentElement.getAttribute('data-admin-theme') === 'light' ? 'light' : 'dark';
+    }
+
+    function updateThemeButtons() {
+        var nextTheme = getTheme() === 'dark' ? 'light' : 'dark';
+        var label = nextTheme === 'dark' ? 'Тёмная тема' : 'Светлая тема';
+        themeToggleButtons.forEach(function(button) {
+            button.textContent = label;
+            button.setAttribute('aria-label', 'Включить ' + label.toLowerCase());
+            button.setAttribute('title', 'Включить ' + label.toLowerCase());
+        });
+    }
+
+    function applyTheme(theme) {
+        document.documentElement.setAttribute('data-admin-theme', theme);
+        try {
+            window.localStorage.setItem(storageKey, theme);
+        } catch (e) {}
+        updateThemeButtons();
+    }
+
+    themeToggleButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            applyTheme(getTheme() === 'dark' ? 'light' : 'dark');
+        });
+    });
+    updateThemeButtons();
 
     if (logoutConfirmBtn && logoutForm) {
         logoutConfirmBtn.addEventListener('click', function() {
