@@ -13,8 +13,11 @@ use yii\helpers\Inflector;
  * @property string|null $description
  * @property string $url
  * @property string|null $theme
+ * @property string $login_type
  * @property string|null $login
  * @property string|null $password
+ * @property string|null $vk_login
+ * @property string|null $vk_password
  * @property string|null $proxy_ip
  * @property string|null $workflow_id
  * @property string|null $workflow_key
@@ -30,8 +33,29 @@ class ZenAccount extends ActiveRecord
     public const SCENARIO_CREATE = 'create';
     public const SCENARIO_UPDATE = 'update';
 
+    public const LOGIN_TYPE_YANDEX = 'yandex';
+    public const LOGIN_TYPE_VK = 'vk';
+    public const LOGIN_TYPE_BOTH = 'both';
+
     /** Массив id тематик для множественного выбора (не хранится в БД). */
     public $themeIds = [];
+
+    public static function loginTypeLabels(): array
+    {
+        return [
+            self::LOGIN_TYPE_YANDEX => 'Только Яндекс (почта)',
+            self::LOGIN_TYPE_VK => 'Только ВКонтакте',
+            self::LOGIN_TYPE_BOTH => 'Яндекс и ВКонтакте',
+        ];
+    }
+
+    public function init(): void
+    {
+        parent::init();
+        if ($this->isNewRecord && ($this->login_type === null || $this->login_type === '')) {
+            $this->login_type = self::LOGIN_TYPE_VK;
+        }
+    }
 
     public static function tableName(): string
     {
@@ -45,8 +69,16 @@ class ZenAccount extends ActiveRecord
 
     public function rules(): array
     {
+        $scenariosAuth = [self::SCENARIO_CREATE, self::SCENARIO_UPDATE];
+
         return [
-            [['name', 'slug', 'url', 'login', 'password'], 'required', 'on' => self::SCENARIO_CREATE],
+            [['name', 'slug', 'url'], 'required', 'on' => self::SCENARIO_CREATE],
+            [['login_type'], 'required', 'on' => $scenariosAuth],
+            [['login_type'], 'string', 'max' => 32],
+            [['login_type'], 'in', 'range' => array_keys(self::loginTypeLabels()), 'on' => $scenariosAuth],
+            [['vk_login', 'vk_password'], 'required', 'on' => $scenariosAuth, 'when' => function (self $m) {
+                return in_array($m->login_type, [self::LOGIN_TYPE_VK, self::LOGIN_TYPE_BOTH], true);
+            }],
             [['name'], 'string', 'max' => 255],
             [['slug'], 'string', 'max' => 255],
             [['slug'], 'match', 'pattern' => '/^[a-z0-9\-]+$/', 'when' => function () { return $this->slug !== ''; }],
@@ -60,7 +92,7 @@ class ZenAccount extends ActiveRecord
             [['theme'], 'string', 'max' => 255],
             [['themeIds'], 'each', 'rule' => ['integer']],
             [['themeIds'], 'each', 'rule' => ['exist', 'targetClass' => Theme::class, 'targetAttribute' => 'id']],
-            [['login', 'password'], 'string', 'max' => 2048],
+            [['login', 'password', 'vk_login', 'vk_password'], 'string', 'max' => 2048],
             [['proxy_ip'], 'string', 'max' => 255],
             [['workflow_id', 'workflow_key'], 'string', 'max' => 2048],
             [['description'], 'string'],
@@ -71,7 +103,7 @@ class ZenAccount extends ActiveRecord
     public function scenarios(): array
     {
         $scenarios = parent::scenarios();
-        $attributes = ['name', 'slug', 'description', 'url', 'theme', 'themeIds', 'login', 'password', 'proxy_ip', 'workflow_id', 'workflow_key'];
+        $attributes = ['name', 'slug', 'description', 'url', 'theme', 'themeIds', 'login_type', 'login', 'password', 'vk_login', 'vk_password', 'proxy_ip', 'workflow_id', 'workflow_key'];
         $scenarios[self::SCENARIO_CREATE] = $attributes;
         $scenarios[self::SCENARIO_UPDATE] = $attributes;
 
@@ -88,8 +120,11 @@ class ZenAccount extends ActiveRecord
             'url' => 'Ссылка на канал',
             'theme' => 'Тематика (текст)',
             'themeIds' => 'Тематики',
-            'login' => 'Логин (Почта)',
-            'password' => 'Пароль',
+            'login_type' => 'Тип входа',
+            'login' => 'Логин Яндекс (почта)',
+            'password' => 'Пароль Яндекс',
+            'vk_login' => 'Логин ВКонтакте',
+            'vk_password' => 'Пароль ВКонтакте',
             'proxy_ip' => 'Прокси IP',
             'workflow_id' => 'Workflow ID',
             'workflow_key' => 'Workflow Key',

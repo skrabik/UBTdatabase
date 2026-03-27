@@ -2,6 +2,7 @@
 /** @var yii\web\View $this */
 /** @var yii\data\ActiveDataProvider $dataProvider */
 
+use app\models\ZenAccount;
 use yii\bootstrap5\Html;
 use yii\grid\GridView;
 
@@ -55,6 +56,11 @@ CSS);
                 'attribute' => 'themeIds',
                 'value' => fn ($m) => implode(', ', array_column($m->themeRelations, 'name')) ?: '—',
                 'label' => 'Тематики',
+            ],
+            [
+                'attribute' => 'login_type',
+                'value' => fn ($m) => ZenAccount::loginTypeLabels()[$m->login_type] ?? $m->login_type,
+                'label' => 'Тип входа',
             ],
             [
                 'attribute' => 'login',

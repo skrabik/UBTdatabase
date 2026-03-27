@@ -101,14 +101,14 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Мой канал\",\n  \"url\": \"https://dzen.ru/id/...\",\n  \"description\": \"Описание канала\",\n  \"theme_ids\": [1, 2],\n  \"slug\": \"moj-kanal\"\n}"
+							"raw": "{\n  \"name\": \"Мой канал\",\n  \"url\": \"https://dzen.ru/id/...\",\n  \"description\": \"Описание канала\",\n  \"theme_ids\": [1, 2],\n  \"slug\": \"moj-kanal\",\n  \"login_type\": \"vk\",\n  \"vk_login\": \"user@example.com\",\n  \"vk_password\": \"secret\",\n  \"login\": \"yandex@example.com\",\n  \"password\": \"secret\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/channels",
 							"host": ["{{baseUrl}}"],
 							"path": ["api", "channels"]
 						},
-						"description": "POST /api/channels. Обязательно: name, url. slug — опционально (генерируется из name)."
+						"description": "POST /api/channels. Обязательно: name, url. slug — опционально. login_type: yandex | vk | both (по умолчанию vk). login/password (Яндекс) и vk_login/vk_password опциональны, кроме типов vk и both — там обязательны vk_login и vk_password."
 					}
 				},
 				{

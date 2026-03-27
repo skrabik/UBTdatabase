@@ -3,6 +3,7 @@
 /** @var app\models\ZenAccount $model */
 
 use app\models\Theme;
+use app\models\ZenAccount;
 use yii\bootstrap5\ActiveForm;
 use yii\bootstrap5\Html;
 
@@ -25,8 +26,13 @@ $this->params['breadcrumbs'][] = $this->title;
             return '<div class="form-check">' . Html::checkbox($name, $checked, ['value' => $value, 'class' => 'form-check-input', 'id' => 'theme-' . $value]) . ' <label class="form-check-label" for="theme-' . $value . '">' . Html::encode($label) . '</label></div>';
         }]
     )->label('Тематики') ?>
+    <?= $form->field($model, 'login_type')->dropDownList(ZenAccount::loginTypeLabels(), [
+        'class' => 'form-select',
+    ])->hint('Логин и пароль Яндекс необязательны. Для типов «ВКонтакте» и «Яндекс и ВКонтакте» обязательны логин и пароль ВК.') ?>
     <?= $form->field($model, 'login')->textInput(['maxlength' => 2048]) ?>
     <?= $form->field($model, 'password')->textInput(['maxlength' => 2048]) ?>
+    <?= $form->field($model, 'vk_login')->textInput(['maxlength' => 2048]) ?>
+    <?= $form->field($model, 'vk_password')->textInput(['maxlength' => 2048]) ?>
     <?= $form->field($model, 'proxy_ip')->textInput(['maxlength' => 255])->hint('Например: 1.2.3.4 или 1.2.3.4:8080') ?>
     <?= $form->field($model, 'workflow_id')->textInput(['maxlength' => 2048])->hint('UUID опубликованной версии workflow из Dify.') ?>
     <?php if (!$model->isNewRecord): ?>

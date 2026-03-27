@@ -76,6 +76,7 @@ class ChannelController extends Controller
     public function actionCreate(): array|Response
     {
         $model = new ZenAccount();
+        $model->scenario = ZenAccount::SCENARIO_CREATE;
         $body = Yii::$app->request->getBodyParams();
 
         $model->name = $body['name'] ?? '';
@@ -83,8 +84,13 @@ class ChannelController extends Controller
         $model->url = $body['url'] ?? '';
         $model->description = $body['description'] ?? null;
         $model->themeIds = isset($body['theme_ids']) && is_array($body['theme_ids']) ? array_map('intval', $body['theme_ids']) : [];
+        $model->login_type = isset($body['login_type']) && $body['login_type'] !== ''
+            ? (string) $body['login_type']
+            : ZenAccount::LOGIN_TYPE_VK;
         $model->login = isset($body['login']) ? (string) $body['login'] : null;
         $model->password = isset($body['password']) ? (string) $body['password'] : null;
+        $model->vk_login = isset($body['vk_login']) ? (string) $body['vk_login'] : null;
+        $model->vk_password = isset($body['vk_password']) ? (string) $body['vk_password'] : null;
         $model->proxy_ip = isset($body['proxy_ip']) ? (string) $body['proxy_ip'] : null;
 
         if (!$model->validate()) {
@@ -259,8 +265,11 @@ class ChannelController extends Controller
             'description' => $channel->description,
             'theme_ids' => array_map('intval', array_column($themes, 'id')),
             'themes' => array_map(fn ($t) => ['id' => (int) $t->id, 'name' => $t->name], $themes),
+            'login_type' => $channel->login_type,
             'login' => $channel->login,
             'password' => $channel->password,
+            'vk_login' => $channel->vk_login,
+            'vk_password' => $channel->vk_password,
             'proxy_ip' => $channel->proxy_ip,
             'created_at' => $channel->created_at,
             'updated_at' => $channel->updated_at,
