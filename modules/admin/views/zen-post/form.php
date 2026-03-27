@@ -31,12 +31,13 @@ $this->registerCss(<<<CSS
 
 .zen-post-quill-field .ql-toolbar.ql-snow,
 .zen-post-quill-field .ql-container.ql-snow {
-    border-color: #ced4da;
+    border-color: var(--admin-border, #ced4da);
 }
 
 .zen-post-quill-editor {
     min-height: 260px;
-    background: #fff;
+    background: var(--admin-bg-elevated, #fff);
+    color: var(--admin-text, #212529);
 }
 
 .zen-post-quill-editor .ql-editor {

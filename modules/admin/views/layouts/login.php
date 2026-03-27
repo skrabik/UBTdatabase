@@ -18,9 +18,9 @@ $this->registerMetaTag(['name' => 'viewport', 'content' => 'width=device-width, 
     <title><?= Html::encode($this->title) ?></title>
     <?php $this->head() ?>
 </head>
-<body>
+<body class="admin-dark admin-dark-login">
 <?php $this->beginBody() ?>
-<div class="container py-5">
+<div class="container py-5 admin-login-shell">
     <?= Alert::widget() ?>
     <?= $content ?>
 </div>

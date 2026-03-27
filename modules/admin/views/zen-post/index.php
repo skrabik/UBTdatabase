@@ -23,11 +23,11 @@ $this->registerCss(<<<CSS
 }
 
 .zen-post-index .table > tbody > tr:hover > td {
-    background-color: #e1efff;
+    background-color: var(--admin-hover, #e1efff);
 }
 
 .zen-post-index .table > tbody > tr:hover > td:hover {
-    background-color: #cfe4ff;
+    background-color: var(--admin-hover-strong, #cfe4ff);
 }
 
 .zen-post-scenario-cell {
@@ -94,7 +94,7 @@ $this->registerCss(<<<CSS
     height: 24px;
     border: 0;
     background: transparent;
-    color: #6c757d;
+    color: var(--admin-text-muted, #6c757d);
     line-height: 1;
     padding: 0;
     cursor: pointer;
@@ -106,11 +106,11 @@ $this->registerCss(<<<CSS
 }
 
 .zen-post-scenario-copy:hover {
-    color: #0d6efd;
+    color: var(--admin-link, #0d6efd);
 }
 
 .zen-post-scenario-copy.is-copied {
-    color: #198754;
+    color: #22c55e;
 }
 CSS);
 

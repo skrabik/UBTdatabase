@@ -15,11 +15,11 @@ $this->registerCss(<<<CSS
 }
 
 .zen-account-index .table > tbody > tr:hover > td {
-    background-color: #e1efff;
+    background-color: var(--admin-hover, #e1efff);
 }
 
 .zen-account-index .table > tbody > tr:hover > td:hover {
-    background-color: #cfe4ff;
+    background-color: var(--admin-hover-strong, #cfe4ff);
 }
 CSS);
 ?>

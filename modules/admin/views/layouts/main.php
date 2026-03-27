@@ -41,7 +41,7 @@ CSS
     <title><?= Html::encode($this->title) ?> — Админка</title>
     <?php $this->head() ?>
 </head>
-<body>
+<body class="admin-dark">
 <?php $this->beginBody() ?>
 <?php
 NavBar::begin([
@@ -239,7 +239,7 @@ $this->registerJs(<<<JS
 JS
 );
 ?>
-<main class="container py-4">
+<main class="container py-4 admin-shell">
     <?= Breadcrumbs::widget(['links' => $this->params['breadcrumbs'] ?? []]) ?>
     <?= Alert::widget() ?>
     <?= $content ?>
