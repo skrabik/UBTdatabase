@@ -3,6 +3,7 @@
 /** @var yii\data\ActiveDataProvider $dataProvider */
 /** @var int|null $accountId */
 
+use app\models\ZenPost;
 use yii\bootstrap5\Html;
 use yii\grid\GridView;
 use yii\helpers\HtmlPurifier;
@@ -321,6 +322,46 @@ $copyIcon = '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">'
                     ]);
                 },
                 'contentOptions' => ['class' => 'zen-post-cell-content', 'style' => 'max-width: 360px;'],
+            ],
+            [
+                'attribute' => 'status',
+                'label' => 'Статус публикации',
+                'format' => 'raw',
+                'value' => function ($m) {
+                    $labels = ZenPost::statusLabels();
+                    $label = $labels[$m->status] ?? $m->status;
+                    $badgeClass = 'bg-secondary';
+                    if ($m->status === ZenPost::STATUS_POSTED) {
+                        $badgeClass = 'bg-success';
+                    } elseif ($m->status === ZenPost::STATUS_PENDING) {
+                        $badgeClass = 'bg-warning text-dark';
+                    }
+                    $parts = [Html::tag('span', Html::encode($label), ['class' => 'badge ' . $badgeClass])];
+                    if (in_array($m->status, [ZenPost::STATUS_PENDING, ZenPost::STATUS_POSTED], true)) {
+                        $switchId = 'zen-post-status-' . (int) $m->id;
+                        $parts[] = Html::tag('div', Html::checkbox('', $m->status === ZenPost::STATUS_POSTED, [
+                            'class' => 'form-check-input js-post-status-toggle',
+                            'id' => $switchId,
+                            'role' => 'switch',
+                            'data-url-posted' => Url::to([
+                                '/admin/zen-post/set-status',
+                                'account_id' => $m->account_id,
+                                'id' => $m->id,
+                                'status' => ZenPost::STATUS_POSTED,
+                            ]),
+                            'data-url-pending' => Url::to([
+                                '/admin/zen-post/set-status',
+                                'account_id' => $m->account_id,
+                                'id' => $m->id,
+                                'status' => ZenPost::STATUS_PENDING,
+                            ]),
+                        ]) . Html::label('Опубликован', $switchId, ['class' => 'form-check-label ms-1 small']), [
+                            'class' => 'form-check form-switch mt-1 mb-0',
+                        ]);
+                    }
+                    return implode(' ', $parts);
+                },
+                'contentOptions' => ['style' => 'white-space: nowrap; vertical-align: middle;'],
             ],
             [
                 'class' => 'yii\grid\ActionColumn',
