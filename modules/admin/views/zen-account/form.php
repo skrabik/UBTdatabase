@@ -28,7 +28,7 @@ $this->params['breadcrumbs'][] = $this->title;
     )->label('Тематики') ?>
     <?= $form->field($model, 'login_type')->dropDownList(ZenAccount::loginTypeLabels(), [
         'class' => 'form-select',
-    ])->hint('Логин и пароль Яндекс необязательны. Для типов «ВКонтакте» и «Яндекс и ВКонтакте» обязательны логин и пароль ВК.') ?>
+    ])->hint('Логин и пароль Яндекс и ВКонтакте необязательны; тип входа задаёт смысл полей для автоматизации.') ?>
     <?= $form->field($model, 'login')->textInput(['maxlength' => 2048]) ?>
     <?= $form->field($model, 'password')->textInput(['maxlength' => 2048]) ?>
     <?= $form->field($model, 'vk_login')->textInput(['maxlength' => 2048]) ?>

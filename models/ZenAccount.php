@@ -76,9 +76,6 @@ class ZenAccount extends ActiveRecord
             [['login_type'], 'required', 'on' => $scenariosAuth],
             [['login_type'], 'string', 'max' => 32],
             [['login_type'], 'in', 'range' => array_keys(self::loginTypeLabels()), 'on' => $scenariosAuth],
-            [['vk_login', 'vk_password'], 'required', 'on' => $scenariosAuth, 'when' => function (self $m) {
-                return in_array($m->login_type, [self::LOGIN_TYPE_VK, self::LOGIN_TYPE_BOTH], true);
-            }],
             [['name'], 'string', 'max' => 255],
             [['slug'], 'string', 'max' => 255],
             [['slug'], 'match', 'pattern' => '/^[a-z0-9\-]+$/', 'when' => function () { return $this->slug !== ''; }],

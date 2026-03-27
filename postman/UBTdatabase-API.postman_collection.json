@@ -108,7 +108,7 @@
 							"host": ["{{baseUrl}}"],
 							"path": ["api", "channels"]
 						},
-						"description": "POST /api/channels. Обязательно: name, url. slug — опционально. login_type: yandex | vk | both (по умолчанию vk). login/password (Яндекс) и vk_login/vk_password опциональны, кроме типов vk и both — там обязательны vk_login и vk_password."
+						"description": "POST /api/channels. Обязательно: name, url. slug — опционально. login_type: yandex | vk | both (по умолчанию vk). Поля login, password, vk_login, vk_password — опциональны."
 					}
 				},
 				{
