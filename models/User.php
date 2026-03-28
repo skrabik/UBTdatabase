@@ -15,6 +15,8 @@ use yii\web\IdentityInterface;
  * @property int|null $created_at
  * @property int|null $updated_at
  * @property int|null $deleted_at
+ *
+ * @property ZenAccount[] $zenAccounts
  */
 class User extends ActiveRecord implements IdentityInterface
 {
@@ -118,6 +120,11 @@ class User extends ActiveRecord implements IdentityInterface
     public function hasRole(string $roleName): bool
     {
         return Yii::$app->authManager->checkAccess($this->id, $roleName);
+    }
+
+    public function getZenAccounts(): ActiveQuery
+    {
+        return $this->hasMany(ZenAccount::class, ['owner_id' => 'id']);
     }
 
     public function beforeSave($insert): bool

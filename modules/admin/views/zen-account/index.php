@@ -1,10 +1,13 @@
 <?php
 /** @var yii\web\View $this */
 /** @var yii\data\ActiveDataProvider $dataProvider */
+/** @var array<int, string> $ownerOptions */
+/** @var int|null $selectedOwnerId */
 
 use app\models\ZenAccount;
 use yii\bootstrap5\Html;
 use yii\grid\GridView;
+use yii\helpers\Url;
 
 $this->title = 'Аккаунты Яндекс.Дзен';
 $this->params['breadcrumbs'][] = $this->title;
@@ -34,6 +37,18 @@ $this->registerCss(<<<CSS
 .zen-account-index .table > tbody > tr:hover > td:hover {
     background-color: var(--admin-hover-strong, #cfe4ff);
 }
+
+.zen-account-filter {
+    display: flex;
+    gap: 12px;
+    align-items: end;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.zen-account-filter-field {
+    min-width: 260px;
+}
 CSS);
 ?>
 <div class="zen-account-index">
@@ -42,6 +57,21 @@ CSS);
     <p>
         <?= Html::a('Добавить аккаунт', ['create'], ['class' => 'btn btn-success']) ?>
     </p>
+
+    <form method="get" class="zen-account-filter">
+        <div class="zen-account-filter-field">
+            <?= Html::label('Владелец', 'zen-account-owner-filter', ['class' => 'form-label']) ?>
+            <?= Html::dropDownList('owner_id', $selectedOwnerId, $ownerOptions, [
+                'id' => 'zen-account-owner-filter',
+                'class' => 'form-select',
+                'prompt' => 'Все владельцы',
+            ]) ?>
+        </div>
+        <div>
+            <?= Html::submitButton('Фильтровать', ['class' => 'btn btn-primary']) ?>
+            <?= Html::a('Сбросить', Url::to(['index']), ['class' => 'btn btn-outline-secondary']) ?>
+        </div>
+    </form>
 
     <?= GridView::widget([
         'dataProvider' => $dataProvider,
@@ -74,6 +104,11 @@ CSS);
                         : '—';
                 },
                 'contentOptions' => ['style' => 'max-width: 200px; overflow: hidden; text-overflow: ellipsis;'],
+            ],
+            [
+                'attribute' => 'owner_id',
+                'label' => 'Владелец',
+                'value' => static fn ($m) => $m->owner?->username ?: '—',
             ],
             [
                 'attribute' => 'themeIds',

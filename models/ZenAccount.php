@@ -21,10 +21,12 @@ use yii\helpers\Inflector;
  * @property string|null $proxy_ip
  * @property string|null $workflow_id
  * @property string|null $workflow_key
+ * @property int|null $owner_id
  * @property int|null $created_at
  * @property int|null $updated_at
  * @property int|null $deleted_at
  *
+ * @property User|null $owner
  * @property Theme[] $themeRelations
  * @property ZenPost[] $posts
  */
@@ -76,6 +78,9 @@ class ZenAccount extends ActiveRecord
             [['login_type'], 'required', 'on' => $scenariosAuth],
             [['login_type'], 'string', 'max' => 32],
             [['login_type'], 'in', 'range' => array_keys(self::loginTypeLabels()), 'on' => $scenariosAuth],
+            [['owner_id'], 'default', 'value' => null],
+            [['owner_id'], 'integer'],
+            [['owner_id'], 'exist', 'targetClass' => User::class, 'targetAttribute' => 'id'],
             [['name'], 'string', 'max' => 255],
             [['slug'], 'string', 'max' => 255],
             [['slug'], 'match', 'pattern' => '/^[a-z0-9\-]+$/', 'when' => function () { return $this->slug !== ''; }],
@@ -100,7 +105,7 @@ class ZenAccount extends ActiveRecord
     public function scenarios(): array
     {
         $scenarios = parent::scenarios();
-        $attributes = ['name', 'slug', 'description', 'url', 'theme', 'themeIds', 'login_type', 'login', 'password', 'vk_login', 'vk_password', 'proxy_ip', 'workflow_id', 'workflow_key'];
+        $attributes = ['name', 'slug', 'description', 'url', 'owner_id', 'theme', 'themeIds', 'login_type', 'login', 'password', 'vk_login', 'vk_password', 'proxy_ip', 'workflow_id', 'workflow_key'];
         $scenarios[self::SCENARIO_CREATE] = $attributes;
         $scenarios[self::SCENARIO_UPDATE] = $attributes;
 
@@ -115,6 +120,7 @@ class ZenAccount extends ActiveRecord
             'slug' => 'Slug',
             'description' => 'Описание',
             'url' => 'Ссылка на канал',
+            'owner_id' => 'Владелец',
             'theme' => 'Тематика (текст)',
             'themeIds' => 'Тематики',
             'login_type' => 'Тип входа',
@@ -135,6 +141,11 @@ class ZenAccount extends ActiveRecord
     {
         return $this->hasMany(Theme::class, ['id' => 'theme_id'])
             ->viaTable('{{%zen_account_theme}}', ['zen_account_id' => 'id']);
+    }
+
+    public function getOwner(): ActiveQuery
+    {
+        return $this->hasOne(User::class, ['id' => 'owner_id']);
     }
 
     public function getPosts()

@@ -1,6 +1,7 @@
 <?php
 /** @var yii\web\View $this */
 /** @var app\models\ZenAccount $model */
+/** @var array<int, string> $ownerOptions */
 
 use app\models\Theme;
 use app\models\ZenAccount;
@@ -20,6 +21,10 @@ $this->params['breadcrumbs'][] = $this->title;
     <?= $form->field($model, 'slug')->textInput(['maxlength' => true])->hint('Только a-z, 0-9 и дефис.') ?>
     <?= $form->field($model, 'description')->textarea(['rows' => 3]) ?>
     <?= $form->field($model, 'url')->textInput(['maxlength' => true]) ?>
+    <?= $form->field($model, 'owner_id')->dropDownList($ownerOptions, [
+        'prompt' => 'Без владельца',
+        'class' => 'form-select',
+    ]) ?>
     <?= $form->field($model, 'themeIds')->checkboxList(
         Theme::find()->select(['name', 'id'])->orderBy(['name' => SORT_ASC])->indexBy('id')->column(),
         ['itemOptions' => ['class' => 'form-check-input'], 'item' => function ($index, $label, $name, $checked, $value) {

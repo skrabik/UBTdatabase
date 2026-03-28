@@ -2,6 +2,7 @@
 
 namespace app\modules\admin\controllers;
 
+use app\models\User;
 use app\models\ZenAccount;
 use Yii;
 use yii\data\ActiveDataProvider;
@@ -23,12 +24,23 @@ class ZenAccountController extends Controller
 
     public function actionIndex(): string
     {
+        $ownerId = Yii::$app->request->get('owner_id');
+        $query = ZenAccount::find()->with(['themeRelations', 'owner']);
+
+        if ($ownerId !== null && $ownerId !== '') {
+            $query->andWhere(['owner_id' => (int) $ownerId]);
+        }
+
         $dataProvider = new ActiveDataProvider([
-            'query' => ZenAccount::find()->with('themeRelations')->orderBy(['id' => SORT_DESC]),
+            'query' => $query->orderBy(['id' => SORT_DESC]),
             'pagination' => ['pageSize' => 20],
         ]);
 
-        return $this->render('index', ['dataProvider' => $dataProvider]);
+        return $this->render('index', [
+            'dataProvider' => $dataProvider,
+            'ownerOptions' => $this->getOwnerOptions(),
+            'selectedOwnerId' => $ownerId === null || $ownerId === '' ? null : (int) $ownerId,
+        ]);
     }
 
     public function actionCreate(): string|\yii\web\Response
@@ -41,7 +53,10 @@ class ZenAccountController extends Controller
             return $this->redirect(['index']);
         }
 
-        return $this->render('form', ['model' => $model]);
+        return $this->render('form', [
+            'model' => $model,
+            'ownerOptions' => $this->getOwnerOptions(),
+        ]);
     }
 
     public function actionUpdate(int $id): string|\yii\web\Response
@@ -54,7 +69,10 @@ class ZenAccountController extends Controller
             return $this->redirect(['index']);
         }
 
-        return $this->render('form', ['model' => $model]);
+        return $this->render('form', [
+            'model' => $model,
+            'ownerOptions' => $this->getOwnerOptions(),
+        ]);
     }
 
     public function actionDelete(int $id): \yii\web\Response
@@ -71,5 +89,14 @@ class ZenAccountController extends Controller
             throw new NotFoundHttpException('Аккаунт не найден.');
         }
         return $model;
+    }
+
+    protected function getOwnerOptions(): array
+    {
+        return User::find()
+            ->select(['username', 'id'])
+            ->orderBy(['username' => SORT_ASC])
+            ->indexBy('id')
+            ->column();
     }
 }
