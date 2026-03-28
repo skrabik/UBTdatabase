@@ -9,6 +9,19 @@ use yii\grid\GridView;
 $this->title = 'Аккаунты Яндекс.Дзен';
 $this->params['breadcrumbs'][] = $this->title;
 
+$channelUrl = static function (?string $url): ?string {
+    $url = trim((string) $url);
+    if ($url === '') {
+        return null;
+    }
+
+    if (!preg_match('~^https?://~i', $url)) {
+        $url = 'https://' . ltrim($url, '/');
+    }
+
+    return $url;
+};
+
 $this->registerCss(<<<CSS
 .zen-account-index .table > tbody > tr > td {
     transition: background-color 0.12s linear;
@@ -49,7 +62,17 @@ CSS);
             [
                 'attribute' => 'url',
                 'format' => 'raw',
-                'value' => fn ($m) => $m->url ? Html::a($m->url, $m->url, ['target' => '_blank', 'rel' => 'noopener noreferrer', 'title' => $m->url]) : '—',
+                'value' => static function ($m) use ($channelUrl) {
+                    $href = $channelUrl($m->url);
+
+                    return $href
+                        ? Html::a($m->url, $href, [
+                            'target' => '_blank',
+                            'rel' => 'noopener noreferrer',
+                            'title' => $m->url,
+                        ])
+                        : '—';
+                },
                 'contentOptions' => ['style' => 'max-width: 200px; overflow: hidden; text-overflow: ellipsis;'],
             ],
             [
