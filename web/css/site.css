@@ -343,6 +343,17 @@ body.admin-theme .table {
     margin-bottom: 0;
 }
 
+body.admin-theme .grid-view {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+body.admin-theme .grid-view > .table {
+    min-width: 100%;
+    width: max-content;
+}
+
 body.admin-theme .table > :not(caption) > * > * {
     background-color: transparent;
     border-bottom-color: var(--admin-border);
